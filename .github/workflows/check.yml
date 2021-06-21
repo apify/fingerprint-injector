@@ -35,7 +35,7 @@ jobs:
                     key: cache-${{ github.run_id }}-v14
             -
                 name: Install Dependencies
-                run: NODE_AUTH_TOKEN=${{secrets.GITHUB_TOKEN}}  npm install
+                run: NODE_AUTH_TOKEN=${{secrets.PUBLISH_TOKEN}}  npm install
             -
                 name: Run Tests
                 run: npm test
