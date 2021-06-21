@@ -76,7 +76,7 @@ class FingerprintInjector {
         return (arg1, arg2) => {
             let fp = arg1;
             let prefix = arg2;
-
+            // compatibility with playwright and puppeteer.
             if (!arg2) {
                 fp = arg1.fp;
                 prefix = arg1.prefix;
