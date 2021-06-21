@@ -71,7 +71,7 @@ jobs:
   # The deploy job is long but there are only 2 important parts. NPM publish
   # and triggering of docker image builds in the apify-actor-docker repo.
   deploy:
-    name: Publish to NPM
+    name: Publish to Github packages
     needs: [lint]
     runs-on: ubuntu-latest
     steps:
