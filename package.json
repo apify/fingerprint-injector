@@ -1,6 +1,6 @@
 {
 	"name": "@apify-packages/fingerprint-injector",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"main": "src/main.js",
 	"description": "Library for the injection of browser fingerprints",
 	"files": [
