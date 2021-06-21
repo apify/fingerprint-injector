@@ -19,7 +19,7 @@ function overridePropertyWithProxy(masterObject, propertyName, proxyHandler) {
     const originalObject = masterObject[propertyName];
     const proxy = new Proxy(masterObject[propertyName], stripProxyFromErrors(proxyHandler));
 
-    redefineProperty(originalObject, propertyName, { value: proxy });
+    redefineProperty(masterObject, propertyName, { value: proxy });
     redirectToString(proxy, originalObject);
 }
 
@@ -250,6 +250,7 @@ const overrideCodecs = (audioCodecs, videoCodecs) => {
     const canPlayType = {
         // eslint-disable-next-line
         apply: function(target, ctx, args) {
+            console.log('function called');
             if (!args || !args.length) {
                 return target.apply(ctx, args);
             }

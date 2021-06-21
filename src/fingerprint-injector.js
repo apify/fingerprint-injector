@@ -1,7 +1,7 @@
 const { nanoid } = require('nanoid');
 const webpack = require('webpack');
 const path = require('path');
-const log = require('@apify/log');
+const log = require('@apify/log').default;
 const fsPromise = require('fs').promises;
 
 const UTILS_FILE_NAME = 'utils.js';
@@ -87,12 +87,10 @@ class FingerprintInjector {
 
             const { overrideInstancePrototype, overrideWebGl, overrideCodecs, overrideBattery } = utils;
             // override navigator
-            console.log(newScreen, 'override1');
 
             overrideInstancePrototype(window.navigator, newNav);
 
             // override screen
-            console.log(newScreen, 'override2');
             overrideInstancePrototype(window.screen, newScreen);
             overrideInstancePrototype(window.history, { length: historyLength });
 
@@ -109,9 +107,9 @@ class FingerprintInjector {
 
     _transformFp(fp) {
         const {
-            availableScreenResolution,
+            availableScreenResolution = [],
             colorDepth,
-            screenResolution,
+            screenResolution = [],
             userAgent,
             cookiesEnabled,
             languages,
@@ -122,7 +120,7 @@ class FingerprintInjector {
             hardwareConcurrency,
             productSub,
             vendor,
-            touchSupport,
+            touchSupport = {},
             videoCard,
             audioCodecs,
             videoCodecs,
@@ -136,14 +134,14 @@ class FingerprintInjector {
             height: screenResolution[0],
             width: screenResolution[1],
         };
-
+        const parsedMemory = parseInt(deviceMemory, 10);
         const navigator = {
             cookieEnabled: this._stringToBoolean(cookiesEnabled),
             doNotTrack: '1',
             language: languages[0],
             languages,
             platform,
-            deviceMemory: deviceMemory && parseInt(deviceMemory, 10),
+            deviceMemory: isNaN(parsedMemory) ? undefined : parsedMemory , // FF does not have deviceMemory available
             hardwareConcurrency: parseInt(hardwareConcurrency, 10),
             productSub,
             vendor,
