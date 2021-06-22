@@ -1,5 +1,3 @@
 const FingerprintInjector = require('./fingerprint-injector');
 
-module.exports = {
-    FingerprintInjector,
-};
+module.exports = FingerprintInjector;

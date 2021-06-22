@@ -6,7 +6,10 @@ const fsPromise = require('fs').promises;
 const useragent = require('useragent');
 
 const UTILS_FILE_NAME = 'utils.js';
-
+/**
+ * Fingerprint injector class.
+ * @class
+ */
 class FingerprintInjector {
     constructor(options = {}) {
         const {
@@ -42,7 +45,7 @@ class FingerprintInjector {
     }
 
     /**
-     * @deprecated
+     * @private
      * @param {BrowserController} browserController
      */
     async _overrideNewPageToUseFingerprint(browserController) {
@@ -74,6 +77,7 @@ class FingerprintInjector {
         await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(), this.fingerprint, this.prefix);
     }
 
+    // Create evaluated bundle
     _getInjectFingerprintFunction() {
         return (arg1, arg2) => {
             let fp = arg1;
