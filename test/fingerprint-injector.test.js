@@ -12,7 +12,7 @@ describe('FingerprintInjector', () => {
     beforeEach(() => {
         const fingerprintGenerator = new FingerprintGenerator({
             devices: ['desktop'],
-            operatingSystems: ['linux'],
+            operatingSystems: ['windows'],
             browsers: [{ name: 'firefox', minVersion: 86 }],
         });
 
