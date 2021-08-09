@@ -1,6 +1,6 @@
 {
 	"name": "@apify-packages/fingerprint-injector",
-	"version": "0.0.4",
+	"version": "1.0.0",
 	"main": "src/index.js",
 	"description": "Library for the injection of browser fingerprints",
 	"files": [
@@ -28,7 +28,7 @@
 		"lint:fix": "./node_modules/.bin/eslint ./src --ext .js,.jsx --fix",
 		"build-docs": "npm run build-toc && node docs/build-docs.js",
 		"build-toc": "markdown-toc docs/README.md -i",
-		"test": "jest --maxWorkers=3 --collect-coverage"
+		"test": "jest --collect-coverage"
 	},
 	"author": {
 		"name": "Apify",

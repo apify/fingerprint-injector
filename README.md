@@ -67,7 +67,7 @@ Fingerprint injector class.
 
 * [FingerprintInjector](#FingerprintInjector)
     * [`.initialize()`](#FingerprintInjector+initialize)
-    * [`.attachFingerprintToPlaywright(browserContext)`](#FingerprintInjector+attachFingerprintToPlaywright)
+    * [`.attachFingerprintToPlaywright(browserContext, fingerprint)`](#FingerprintInjector+attachFingerprintToPlaywright)
     * [`.attachFingerprintToPuppeteer(page)`](#FingerprintInjector+attachFingerprintToPuppeteer)
 
 
@@ -83,13 +83,14 @@ Builds utils to be injected with a randomized prefix to the browser
 
 <a name="FingerprintInjector+attachFingerprintToPlaywright"></a>
 
-#### `fingerprintInjector.attachFingerprintToPlaywright(browserContext)`
+#### `fingerprintInjector.attachFingerprintToPlaywright(browserContext, fingerprint)`
 Adds init script to the browser context so the fingerprint is changed before every document creation.
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | browserContext | <code>BrowserContext</code> | playwright browser context |
+| fingerprint | <code>object</code> | fingerprint from `fingerprint-generator` |
 
 
 * * *

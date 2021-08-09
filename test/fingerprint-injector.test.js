@@ -1,16 +1,16 @@
 const fs = require('fs');
 const FingerprintGenerator = require('fingerprint-generator');
 const playwright = require('playwright');
-const Apify = require('apify');
 
-const { FingerprintInjector } = require('../src');
+const FingerprintInjector = require('../src');
 
 jest.setTimeout(400000);
 
 describe('FingerprintInjector', () => {
     let fpInjector;
+    let fingerprintGenerator;
     beforeEach(() => {
-        const fingerprintGenerator = new FingerprintGenerator({
+        fingerprintGenerator = new FingerprintGenerator({
             devices: ['desktop'],
             operatingSystems: ['windows'],
             browsers: [{ name: 'firefox', minVersion: 86 }],
@@ -18,14 +18,40 @@ describe('FingerprintInjector', () => {
 
         const { fingerprint } = fingerprintGenerator.getFingerprint();
 
-        console.log(fingerprint);
-
         fpInjector = new FingerprintInjector({ fingerprint });
     });
 
     test('should initialize', async () => {
         await fpInjector.initialize();
         expect(fs.existsSync(fpInjector.buildUtilsPath)).toBe(true);
+    });
+    describe('Injection methods', () => {
+        let browser;
+        let context;
+        beforeEach(async () => {
+            await fpInjector.initialize();
+            browser = await playwright.firefox.launch({ headless: false });
+
+            context = await browser.newContext();
+        });
+
+        afterEach(async () => {
+            await browser.close().catch(() => {});
+        });
+
+        test('should override fingerprint in attach function', async () => {
+            jest.setTimeout(60000);
+            const { fingerprint } = fingerprintGenerator.getFingerprint();
+
+            await fpInjector.attachFingerprintToPlaywright(context, fingerprint);
+
+            const page = await context.newPage();
+            await page.goto('https://google.com');
+            const platform = await page.evaluate(() => navigator.platform);
+            const hardwareConcurrency = await page.evaluate(() => navigator.hardwareConcurrency);
+            expect(platform).toBe(fingerprint.platform);
+            expect(hardwareConcurrency).toBe(fingerprint.hardwareConcurrency);
+        });
     });
 
     describe('fingerprint overrides', () => {
@@ -71,8 +97,6 @@ describe('FingerprintInjector', () => {
                 }, codec);
                 expect(canPlay).toEqual(canPlayBrowser);
             }
-
-            console.log(videoCodecs);
         });
     });
 });
