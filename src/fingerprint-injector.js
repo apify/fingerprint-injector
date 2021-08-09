@@ -16,13 +16,13 @@ class FingerprintInjector {
             fingerprint,
         } = options;
 
-        this.fingerprint = this._transformFp(fingerprint);
+        if (fingerprint) {
+            this.fingerprint = fingerprint;
+        }
 
         this.prefix = nanoid();
         this.log = log.child({ prefix: 'FingerprintInjector' });
         this.buildUtils = '';
-
-        this.log.info(`Using fingerprint`, { fingerprint: this.fingerprint });
     }
 
     /**
@@ -30,39 +30,23 @@ class FingerprintInjector {
     */
     async initialize() {
         this.buildUtilsPath = await this._buildUtils();
+        this.log.info('Successfully initialized');
     }
 
     /**
      * Adds init script to the browser context so the fingerprint is changed before every document creation.
      * @param {BrowserContext} browserContext - playwright browser context
+     * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
-    async attachFingerprintToPlaywright(browserContext) {
+    async attachFingerprintToPlaywright(browserContext, fingerprint = this.fingerprint) {
+        const transformedFingerprint = this._transformFp(fingerprint);
         await browserContext.addInitScript({
             path: this.buildUtilsPath,
         });
 
-        await browserContext.addInitScript(this._getInjectFingerprintFunction(), { fp: this.fingerprint, prefix: this.prefix });
-    }
+        this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
 
-    /**
-     * @private
-     * @param {BrowserController} browserController
-     */
-    async _overrideNewPageToUseFingerprint(browserController) {
-        const { fingerprint } = browserController.userData;
-        const { screen, language, userAgent } = fingerprint;
-
-        const oldLaunch = browserController.browser.newPage;
-        browserController.browser.newPage = async () => {
-            return oldLaunch.bind(browserController.browser)({
-                locale: language,
-                userAgent,
-                viewport: {
-                    width: screen.width,
-                    height: screen.height,
-                },
-            });
-        };
+        await browserContext.addInitScript(this._getInjectFingerprintFunction(), { fp: transformedFingerprint, prefix: this.prefix });
     }
 
     /**
@@ -146,7 +130,7 @@ class FingerprintInjector {
         const parsedTouchPoints = parseInt(touchSupport.maxTouchPoints, 10);
 
         const navigator = {
-            cookieEnabled: this._stringToBoolean(cookiesEnabled),
+            cookieEnabled: this._convertBoolean(cookiesEnabled),
             doNotTrack: '1',
             language: languages[0],
             languages,
@@ -181,7 +165,7 @@ class FingerprintInjector {
         };
         let batteryData;
 
-        if (this._stringToBoolean(battery)) {
+        if (this._convertBoolean(battery)) {
             batteryData = { level: 0.25, chargingTime: 322, dischargingTime: Infinity }; // TODO: randomize
         }
 
@@ -197,8 +181,14 @@ class FingerprintInjector {
         };
     }
 
-    _stringToBoolean(string) {
-        return string === 'True';
+    _convertBoolean(value) {
+        if (typeof value === 'boolean') {
+            return value;
+        }
+
+        // there were sometimes strings like this.
+        // This data format error should be fixed in the new fp collector.
+        return value === 'True';
     }
 
     async _buildUtils() {
