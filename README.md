@@ -68,7 +68,7 @@ Fingerprint injector class.
 * [FingerprintInjector](#FingerprintInjector)
     * [`.initialize()`](#FingerprintInjector+initialize)
     * [`.attachFingerprintToPlaywright(browserContext, fingerprint)`](#FingerprintInjector+attachFingerprintToPlaywright)
-    * [`.attachFingerprintToPuppeteer(page)`](#FingerprintInjector+attachFingerprintToPuppeteer)
+    * [`.attachFingerprintToPuppeteer(page, fingerprint)`](#FingerprintInjector+attachFingerprintToPuppeteer)
 
 
 * * *
@@ -97,13 +97,14 @@ Adds init script to the browser context so the fingerprint is changed before eve
 
 <a name="FingerprintInjector+attachFingerprintToPuppeteer"></a>
 
-#### `fingerprintInjector.attachFingerprintToPuppeteer(page)`
+#### `fingerprintInjector.attachFingerprintToPuppeteer(page, fingerprint)`
 Adds scripts that is evaluated before every document creation.
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | page | <code>Page</code> | puppeteer page |
+| fingerprint | <code>object</code> | fingerprint from `fingerprint-generator` |
 
 
 * * *

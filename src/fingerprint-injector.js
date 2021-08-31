@@ -52,13 +52,16 @@ class FingerprintInjector {
     /**
      * Adds scripts that is evaluated before every document creation.
      * @param {Page} page - puppeteer page
+     * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
-    async attachFingerprintToPuppeteer(page) {
+    async attachFingerprintToPuppeteer(page, fingerprint = this.fingerprint) {
+        const transformedFingerprint = this._transformFp(fingerprint);
+
         const script = await fsPromise.readFile(this.buildUtilsPath, 'utf-8');
 
         await page.evaluateOnNewDocument(script);
 
-        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(), this.fingerprint, this.prefix);
+        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(), transformedFingerprint, this.prefix);
     }
 
     // Create evaluated bundle
