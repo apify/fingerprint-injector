@@ -66,6 +66,7 @@ class FingerprintInjector {
      */
     _getInjectFingerprintFunctionString(fingerprint) {
         function inject() {
+            // eslint-disable-next-line
             const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
             // override navigator
             // eslint-disable-next-line
@@ -133,11 +134,11 @@ class FingerprintInjector {
             language: languages[0],
             languages,
             platform,
-            deviceMemory: isNaN(parsedMemory) ? undefined : parsedMemory, // FF does not have deviceMemory available
+            deviceMemory: Number.isNaN(parsedMemory) ? undefined : parsedMemory, // FF does not have deviceMemory available
             hardwareConcurrency: parseInt(hardwareConcurrency, 10),
             productSub,
             vendor,
-            maxTouchPoints: isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
+            maxTouchPoints: Number.isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
         };
 
         if (useragent.is(userAgent).firefox) {
