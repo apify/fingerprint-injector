@@ -1,7 +1,7 @@
 const fs = require('fs');
 const FingerprintGenerator = require('fingerprint-generator');
 const playwright = require('playwright');
-
+const Apify = require('apify');
 const FingerprintInjector = require('../src');
 
 jest.setTimeout(400000);

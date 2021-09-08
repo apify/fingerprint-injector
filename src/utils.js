@@ -246,17 +246,15 @@ const overrideCodecs = (audioCodecs, videoCodecs) => {
             }
         }
     };
-    console.log('OVERRIDING CODECS');
+
     const canPlayType = {
         // eslint-disable-next-line
         apply: function(target, ctx, args) {
-            console.log('function called');
             if (!args || !args.length) {
                 return target.apply(ctx, args);
             }
             const [codecString] = args;
             const codec = findCodec(codecString);
-            console.log('codec found', codec);
 
             if (codec) {
                 return codec.state;
@@ -305,11 +303,3 @@ function makeHandler() {
         }),
     };
 }
-
-module.exports = {
-    overrideInstancePrototype,
-    overrideWebGl,
-    overrideCodecs,
-    makeHandler,
-    overrideBattery,
-};
