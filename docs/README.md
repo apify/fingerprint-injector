@@ -5,10 +5,9 @@ It is highly recommended to use this library with the Apify `fingerprint-generat
 
 <!-- toc -->
 
-- [Fingerprint injector](#fingerprint-injector)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [API Reference](#api-reference)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API Reference](#api-reference)
 
 <!-- tocstop -->
 
