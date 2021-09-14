@@ -12,7 +12,7 @@ It is highly recommended to use this library with the Apify `fingerprint-generat
 <!-- tocstop -->
 
 ## Installation
-At thís stage of development the `fingerprint-injector` is a standalone private package - soon to be public with some stealthy additions to the code.
+At this stage of development the `fingerprint-injector` is a standalone private package - soon to be public with some stealthy additions to the code.
 The installation process is the same as for the `unblockers`. Please refer to this tutorial - https://www.notion.so/apify/Installing-unblockers-2c0db985c84d45f7a81d1a11d826d263.
 
 ```bash
@@ -20,7 +20,7 @@ npm install @apify-packages/fingerprint-injector
 ```
 
 ## Usage
-This simple example shows how to use fingerprint injector with `browser-pool` and `playwright` firefox browser. Please note that `fingerprint-generator` must be installed from git for now like this: `"fingerprint-generator": "git+https://github.com/apify/fingerprint-generator.git#bayesianGenerator"`
+This simple example shows how to use fingerprint injector with `browser-pool` plugin system and `playwright` firefox browser. Please note that `fingerprint-generator` must be installed from git for now like this: `"fingerprint-generator": "git+https://github.com/apify/fingerprint-generator.git#bayesianGenerator"`
 
 ```js
 const { PlaywrightPlugin } = require('browser-pool');

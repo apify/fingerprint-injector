@@ -1,5 +1,3 @@
-const { nanoid } = require('nanoid');
-const webpack = require('webpack');
 const path = require('path');
 const log = require('@apify/log').default;
 const fsPromise = require('fs').promises;
@@ -20,16 +18,15 @@ class FingerprintInjector {
             this.fingerprint = fingerprint;
         }
 
-        this.prefix = nanoid();
         this.log = log.child({ prefix: 'FingerprintInjector' });
-        this.buildUtils = '';
+        this.utilsString = '';
     }
 
     /**
     * Builds utils to be injected with a randomized prefix to the browser
     */
     async initialize() {
-        this.buildUtilsPath = await this._buildUtils();
+        this.utilsString = await fsPromise.readFile(path.join(__dirname, UTILS_FILE_NAME));
         this.log.info('Successfully initialized');
     }
 
@@ -40,13 +37,13 @@ class FingerprintInjector {
      */
     async attachFingerprintToPlaywright(browserContext, fingerprint = this.fingerprint) {
         const transformedFingerprint = this._transformFp(fingerprint);
-        await browserContext.addInitScript({
-            path: this.buildUtilsPath,
-        });
 
         this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
+        console.log(transformedFingerprint);
 
-        await browserContext.addInitScript(this._getInjectFingerprintFunction(), { fp: transformedFingerprint, prefix: this.prefix });
+        await browserContext.addInitScript({
+            content: this._getInjectFingerprintFunctionString(transformedFingerprint),
+        });
     }
 
     /**
@@ -56,46 +53,45 @@ class FingerprintInjector {
      */
     async attachFingerprintToPuppeteer(page, fingerprint = this.fingerprint) {
         const transformedFingerprint = this._transformFp(fingerprint);
+        this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
 
-        const script = await fsPromise.readFile(this.buildUtilsPath, 'utf-8');
-
-        await page.evaluateOnNewDocument(script);
-
-        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(), transformedFingerprint, this.prefix);
+        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(transformedFingerprint));
     }
 
-    // Create evaluated bundle
-    _getInjectFingerprintFunction() {
-        return (arg1, arg2) => {
-            let fp = arg1;
-            let prefix = arg2;
-            // compatibility with playwright and puppeteer.
-            if (!arg2) {
-                fp = arg1.fp;
-                prefix = arg1.prefix;
-            }
-
+    /**
+     * Create injection function string.
+     * @private
+     * @param {object} fingerprint - transformed fingerprint.
+     * @returns {string} - script that overrides browser fingerprint.
+     */
+    _getInjectFingerprintFunctionString(fingerprint) {
+        function inject() {
+            // eslint-disable-next-line
             const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
-            const utils = window[prefix];
-
-            const { overrideInstancePrototype, overrideWebGl, overrideCodecs, overrideBattery } = utils;
             // override navigator
-
+            // eslint-disable-next-line
             overrideInstancePrototype(window.navigator, newNav);
 
             // override screen
+            // eslint-disable-next-line
             overrideInstancePrototype(window.screen, newScreen);
+            // eslint-disable-next-line
             overrideInstancePrototype(window.history, { length: historyLength });
 
             // override webGl
+            // eslint-disable-next-line
             overrideWebGl(webGl);
 
             // override codecs
+            // eslint-disable-next-line
             overrideCodecs(audioCodecs, videoCodecs);
 
             // override batteryInfo
+            // eslint-disable-next-line
             overrideBattery(navigator, 'getBattery', async () => batteryInfo);
-        };
+        }
+        const mainFunctionString = inject.toString();
+        return `${this.utilsString}; const fp=${JSON.stringify(fingerprint)}; console.log(fp, "RPDE"); (${mainFunctionString})() `;
     }
 
     _transformFp(fp) {
@@ -119,7 +115,6 @@ class FingerprintInjector {
             videoCodecs,
             battery,
         } = fp;
-        const parsedUa = useragent.parse(userAgent);
 
         const screen = {
             availHeight: availableScreenResolution[0],
@@ -138,25 +133,12 @@ class FingerprintInjector {
             language: languages[0],
             languages,
             platform,
-            deviceMemory: isNaN(parsedMemory) ? undefined : parsedMemory, // FF does not have deviceMemory available
+            deviceMemory: Number.isNaN(parsedMemory) ? undefined : parsedMemory, // FF does not have deviceMemory available
             hardwareConcurrency: parseInt(hardwareConcurrency, 10),
             productSub,
             vendor,
-            maxTouchPoints: isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
+            maxTouchPoints: Number.isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
         };
-
-        if (useragent.is(userAgent).firefox) {
-            navigator.vendor = '';
-
-            const os = parsedUa.os.toString();
-            const [major, minor] = parsedUa.os.toVersion().split('.');
-
-            if (os.toLowerCase().includes('windows')) {
-                navigator.oscpu = userAgent.includes('x64') ? `Windows NT ${major}.${minor}; Win64; x64` : `Windows NT ${major}.${minor};`;
-            } else if (os.toLowerCase().includes('mac')) {
-                navigator.oscpu = `Intel Mac OS X ${major}.${minor}`;
-            }
-        }
 
         const pluginsData = {
             mimeTypes,
@@ -192,30 +174,6 @@ class FingerprintInjector {
         // there were sometimes strings like this.
         // This data format error should be fixed in the new fp collector.
         return value === 'True';
-    }
-
-    async _buildUtils() {
-        return new Promise((resolve, reject) => {
-            webpack({
-                mode: 'production',
-                entry: path.join(__dirname, UTILS_FILE_NAME),
-                output: {
-                    filename: UTILS_FILE_NAME,
-                    path: path.resolve(__dirname, 'dist'),
-                    library: {
-                        type: 'window',
-                        name: this.prefix,
-                    },
-                },
-
-            }, (err, stats) => { // [Stats Object](#stats-object)
-                if (err || stats.hasErrors()) {
-                    return reject(new Error(`Webpack compilation failed. Reason: ${err.message}`));
-                }
-
-                resolve(path.resolve(__dirname, 'dist', UTILS_FILE_NAME));
-            });
-        });
     }
 }
 

@@ -1,6 +1,6 @@
 {
 	"name": "@apify-packages/fingerprint-injector",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"main": "src/index.js",
 	"description": "Library for the injection of browser fingerprints",
 	"files": [
@@ -8,9 +8,7 @@
 	],
 	"dependencies": {
 		"@apify/log": "^1.0.5",
-		"nanoid": "^3.1.23",
-		"useragent": "^2.3.0",
-		"webpack": "^5.39.1"
+		"useragent": "^2.3.0"
 	},
 	"devDependencies": {
 		"@apify/eslint-config": "^0.1.3",
