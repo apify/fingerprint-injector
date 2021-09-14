@@ -39,6 +39,7 @@ class FingerprintInjector {
         const transformedFingerprint = this._transformFp(fingerprint);
 
         this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
+        console.log(transformedFingerprint);
 
         await browserContext.addInitScript({
             content: this._getInjectFingerprintFunctionString(transformedFingerprint),
@@ -52,7 +53,6 @@ class FingerprintInjector {
      */
     async attachFingerprintToPuppeteer(page, fingerprint = this.fingerprint) {
         const transformedFingerprint = this._transformFp(fingerprint);
-
         this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
 
         await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(transformedFingerprint));
@@ -115,7 +115,6 @@ class FingerprintInjector {
             videoCodecs,
             battery,
         } = fp;
-        const parsedUa = useragent.parse(userAgent);
 
         const screen = {
             availHeight: availableScreenResolution[0],
@@ -140,19 +139,6 @@ class FingerprintInjector {
             vendor,
             maxTouchPoints: Number.isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
         };
-
-        if (useragent.is(userAgent).firefox) {
-            navigator.vendor = '';
-
-            const os = parsedUa.os.toString();
-            const [major, minor] = parsedUa.os.toVersion().split('.');
-
-            if (os.toLowerCase().includes('windows')) {
-                navigator.oscpu = userAgent.includes('x64') ? `Windows NT ${major}.${minor}; Win64; x64` : `Windows NT ${major}.${minor};`;
-            } else if (os.toLowerCase().includes('mac')) {
-                navigator.oscpu = `Intel Mac OS X ${major}.${minor}`;
-            }
-        }
 
         const pluginsData = {
             mimeTypes,
