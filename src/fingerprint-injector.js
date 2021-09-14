@@ -54,7 +54,7 @@ class FingerprintInjector {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
         this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
-        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(enhancedFingerprint));
+        await page.evaluateOnNewDocument(this._getInjectFingerprintFunctionString(enhancedFingerprint));
     }
 
     /**
