@@ -90,7 +90,7 @@ class FingerprintInjector {
             overrideBattery(navigator, 'getBattery', async () => batteryInfo);
         }
         const mainFunctionString = inject.toString();
-        return `${this.utilsString}; const fp=${JSON.stringify(fingerprint)}; console.log(fp, "RPDE"); (${mainFunctionString})() `;
+        return `${this.utilsString}; const fp=${JSON.stringify(fingerprint)}; (${mainFunctionString})() `;
     }
 
     _enhanceFingerprint(fingerprint) {
