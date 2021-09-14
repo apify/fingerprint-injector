@@ -36,13 +36,12 @@ class FingerprintInjector {
      * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
     async attachFingerprintToPlaywright(browserContext, fingerprint = this.fingerprint) {
-        const transformedFingerprint = this._transformFp(fingerprint);
+        const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
 
-        this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
-        console.log(transformedFingerprint);
+        this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
         await browserContext.addInitScript({
-            content: this._getInjectFingerprintFunctionString(transformedFingerprint),
+            content: this._getInjectFingerprintFunctionString(enhancedFingerprint),
         });
     }
 
@@ -52,16 +51,16 @@ class FingerprintInjector {
      * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
     async attachFingerprintToPuppeteer(page, fingerprint = this.fingerprint) {
-        const transformedFingerprint = this._transformFp(fingerprint);
-        this.log.info(`Using fingerprint`, { fingerprint: transformedFingerprint });
+        const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
+        this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
-        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(transformedFingerprint));
+        await page.evaluateOnNewDocument(this._getInjectFingerprintFunction(enhancedFingerprint));
     }
 
     /**
      * Create injection function string.
      * @private
-     * @param {object} fingerprint - transformed fingerprint.
+     * @param {object} fingerprint - enhanced fingerprint.
      * @returns {string} - script that overrides browser fingerprint.
      */
     _getInjectFingerprintFunctionString(fingerprint) {
@@ -94,86 +93,40 @@ class FingerprintInjector {
         return `${this.utilsString}; const fp=${JSON.stringify(fingerprint)}; console.log(fp, "RPDE"); (${mainFunctionString})() `;
     }
 
-    _transformFp(fp) {
+    _enhanceFingerprint(fingerprint) {
         const {
-            availableScreenResolution = [],
-            colorDepth,
-            screenResolution = [],
-            userAgent,
-            cookiesEnabled,
-            languages,
-            platform,
-            mimeTypes,
-            plugins,
-            deviceMemory,
-            hardwareConcurrency,
-            productSub,
-            vendor,
-            touchSupport = {},
-            videoCard,
-            audioCodecs,
-            videoCodecs,
             battery,
-        } = fp;
+            navigator,
+            userAgent,
+            ...rest
+        } = fingerprint;
 
-        const screen = {
-            availHeight: availableScreenResolution[0],
-            availWidth: availableScreenResolution[1],
-            pixelDepth: colorDepth,
-            height: screenResolution[0],
-            width: screenResolution[1],
-        };
+        const parsedUa = useragent.parse(userAgent);
 
-        const parsedMemory = parseInt(deviceMemory, 10);
-        const parsedTouchPoints = parseInt(touchSupport.maxTouchPoints, 10);
+        if (useragent.is(userAgent).firefox) {
+            navigator.vendor = '';
 
-        const navigator = {
-            cookieEnabled: this._convertBoolean(cookiesEnabled),
-            doNotTrack: '1',
-            language: languages[0],
-            languages,
-            platform,
-            deviceMemory: Number.isNaN(parsedMemory) ? undefined : parsedMemory, // FF does not have deviceMemory available
-            hardwareConcurrency: parseInt(hardwareConcurrency, 10),
-            productSub,
-            vendor,
-            maxTouchPoints: Number.isNaN(parsedTouchPoints) ? 0 : parsedTouchPoints,
-        };
+            const os = parsedUa.os.toString();
+            const [major, minor] = parsedUa.os.toVersion().split('.');
 
-        const pluginsData = {
-            mimeTypes,
-            plugins,
-        };
-        const webGl = {
-            vendor: videoCard[0],
-            renderer: videoCard[1],
-        };
+            if (os.toLowerCase().includes('windows')) {
+                navigator.oscpu = userAgent.includes('x64') ? `Windows NT ${major}.${minor}; Win64; x64` : `Windows NT ${major}.${minor};`;
+            } else if (os.toLowerCase().includes('mac')) {
+                navigator.oscpu = `Intel Mac OS X ${major}.${minor}`;
+            }
+        }
         let batteryData;
 
-        if (this._convertBoolean(battery)) {
+        if (battery) {
             batteryData = { level: 0.25, chargingTime: 322, dischargingTime: Infinity }; // TODO: randomize
         }
 
         return {
-            screen,
+            ...rest,
             navigator,
-            webGl,
-            audioCodecs,
-            videoCodecs,
-            pluginsData,
             batteryData,
             userAgent,
         };
-    }
-
-    _convertBoolean(value) {
-        if (typeof value === 'boolean') {
-            return value;
-        }
-
-        // there were sometimes strings like this.
-        // This data format error should be fixed in the new fp collector.
-        return value === 'True';
     }
 }
 

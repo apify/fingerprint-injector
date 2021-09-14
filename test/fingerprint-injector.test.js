@@ -1,7 +1,5 @@
-const fs = require('fs');
 const FingerprintGenerator = require('fingerprint-generator');
 const playwright = require('playwright');
-const Apify = require('apify');
 const FingerprintInjector = require('../src');
 
 jest.setTimeout(400000);
@@ -23,7 +21,7 @@ describe('FingerprintInjector', () => {
 
     test('should initialize', async () => {
         await fpInjector.initialize();
-        expect(fs.existsSync(fpInjector.buildUtilsPath)).toBe(true);
+        expect(fpInjector.utilsString).toBeTruthy();
     });
     describe('Injection methods', () => {
         let browser;
@@ -49,8 +47,8 @@ describe('FingerprintInjector', () => {
             await page.goto('https://google.com');
             const platform = await page.evaluate(() => navigator.platform);
             const hardwareConcurrency = await page.evaluate(() => navigator.hardwareConcurrency);
-            expect(platform).toBe(fingerprint.platform);
-            expect(hardwareConcurrency).toBe(fingerprint.hardwareConcurrency);
+            expect(platform).toBe(fingerprint.navigator.platform);
+            expect(hardwareConcurrency).toBe(fingerprint.navigator.hardwareConcurrency);
         });
     });
 
