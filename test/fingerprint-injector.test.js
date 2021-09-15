@@ -10,7 +10,7 @@ describe('FingerprintInjector', () => {
     beforeEach(() => {
         fingerprintGenerator = new FingerprintGenerator({
             devices: ['desktop'],
-            operatingSystems: ['windows'],
+            operatingSystems: ['linux'],
             browsers: [{ name: 'firefox', minVersion: 86 }],
         });
 
@@ -47,8 +47,10 @@ describe('FingerprintInjector', () => {
             await page.goto('https://google.com');
             const platform = await page.evaluate(() => navigator.platform);
             const hardwareConcurrency = await page.evaluate(() => navigator.hardwareConcurrency);
+            const oscpu = await page.evaluate(() => navigator.oscpu);
             expect(platform).toBe(fingerprint.navigator.platform);
             expect(hardwareConcurrency).toBe(fingerprint.navigator.hardwareConcurrency);
+            expect(oscpu).toBe(fingerprint.navigator.oscpu);
         });
     });
 

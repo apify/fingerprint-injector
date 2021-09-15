@@ -113,6 +113,8 @@ class FingerprintInjector {
                 navigator.oscpu = userAgent.includes('x64') ? `Windows NT ${major}.${minor}; Win64; x64` : `Windows NT ${major}.${minor};`;
             } else if (os.toLowerCase().includes('mac')) {
                 navigator.oscpu = `Intel Mac OS X ${major}.${minor}`;
+            } else if (os.toLowerCase().includes('ubuntu')) {
+                navigator.oscpu = 'Linux x86_64';
             }
         }
         let batteryData;

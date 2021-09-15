@@ -16,11 +16,11 @@ At this stage of development the `fingerprint-injector` is a standalone private 
 The installation process is the same as for the `unblockers`. Please refer to this tutorial - https://www.notion.so/apify/Installing-unblockers-2c0db985c84d45f7a81d1a11d826d263.
 
 ```bash
-npm install @apify-packages/fingerprint-injector
+npm install fingerprint-injector
 ```
 
 ## Usage
-This simple example shows how to use fingerprint injector with `browser-pool` plugin system and `playwright` firefox browser. Please note that `fingerprint-generator` must be installed from git for now like this: `"fingerprint-generator": "git+https://github.com/apify/fingerprint-generator.git#bayesianGenerator"`
+This simple example shows how to use fingerprint injector with `browser-pool` plugin system, `playwright` firefox browser and the Apify [`fingerprint-generator`]()
 
 ```js
 const { PlaywrightPlugin } = require('browser-pool');
@@ -40,15 +40,15 @@ const FingerprintInjector  = require('@apify-packages/fingerprint-injector');
     const { fingerprint } = fingerprintGenerator.getFingerprint();
 
     const fingerprintInjector = new FingerprintInjector({ fingerprint });
-    // Initialize fingerprint - it needs to build its utils script under randomized seed.
+    // Initialize fingerprint - it needs to load utils script.
     await fingerprintInjector.initialize();
 
     const launchContext = playwrightPlugin.createLaunchContext();
     const browser = await playwrightPlugin.launch(launchContext);
     // For now this needs to be set manually to the context.
     const context = await browser.newContext({
-        userAgent: fingerprintInjector.fingerprint.userAgent,
-        locale: fingerprintInjector.fingerprint.navigator.language,
+        userAgent: fingerprint.userAgent,
+        locale: fingerprint.navigator.language,
     });
    // Attach fingerprint
    await fingerprintInjector.attachFingerprintToPlaywright(context);
