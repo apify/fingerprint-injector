@@ -1,33 +1,45 @@
-const path = require('path');
-const log = require('@apify/log').default;
-const fsPromise = require('fs').promises;
-const useragent = require('useragent');
+import * as path from 'path';
+import log, { Log } from '@apify/log';
+import * as fs from 'fs'
+import * as useragent from 'useragent';
+import { UTILS_FILE_NAME } from "./constants"
 
-const UTILS_FILE_NAME = 'utils.js';
+type EnhancedFingerprint = {
+    screen: Record<string, number>,
+    navigator: Record<string, any>,
+    webGl: Record<string, string>,
+    userAgent: string,
+    audioCodecs: Array<Record<string, string>>
+    videoCodecs: Array<Record<string, string>>
+    batteryData?: Record<string, number>,
+
+}
+
+type Fingerprint = {
+    screen: Record<string, number>,
+    navigator: Record<string, any>,
+    webGl: Record<string, string>,
+    userAgent: string,
+    audioCodecs: Array<Record<string, string>>
+    videoCodecs: Array<Record<string, string>>
+    battery?: boolean,
+}
+
 /**
  * Fingerprint injector class.
  * @class
  */
-class FingerprintInjector {
-    constructor(options = {}) {
-        const {
-            fingerprint,
-        } = options;
+export default class FingerprintInjector {
+    log: Log
+    utilsJs: Buffer
 
-        if (fingerprint) {
-            this.fingerprint = fingerprint;
-        }
-
+    constructor() {
         this.log = log.child({ prefix: 'FingerprintInjector' });
-        this.utilsString = '';
-    }
-
-    /**
-    * Builds utils to be injected with a randomized prefix to the browser
-    */
-    async initialize() {
-        this.utilsString = await fsPromise.readFile(path.join(__dirname, UTILS_FILE_NAME));
-        this.log.info('Successfully initialized');
+       
+        // For the simplicity of calling only the constructor and avoid having a initialize method.
+        this.utilsJs = fs.readFileSync(path.join(__dirname, UTILS_FILE_NAME))
+       
+        this.log.info('Successfully initialized.');
     }
 
     /**
@@ -35,13 +47,13 @@ class FingerprintInjector {
      * @param {BrowserContext} browserContext - playwright browser context
      * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
-    async attachFingerprintToPlaywright(browserContext, fingerprint = this.fingerprint) {
+    async attachFingerprintToPlaywright(browserContext: import("playwright").BrowserContext, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
 
         this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
         await browserContext.addInitScript({
-            content: this._getInjectFingerprintFunctionString(enhancedFingerprint),
+            content: this._getInjectableFingerprintFunction(enhancedFingerprint),
         });
     }
 
@@ -50,11 +62,11 @@ class FingerprintInjector {
      * @param {Page} page - puppeteer page
      * @param {object} fingerprint - fingerprint from `fingerprint-generator`
      */
-    async attachFingerprintToPuppeteer(page, fingerprint = this.fingerprint) {
+    async attachFingerprintToPuppeteer(page: import("puppeteer").Page, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
         this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
-        await page.evaluateOnNewDocument(this._getInjectFingerprintFunctionString(enhancedFingerprint));
+        await page.evaluateOnNewDocument(this._getInjectableFingerprintFunction(enhancedFingerprint));
     }
 
     /**
@@ -63,18 +75,18 @@ class FingerprintInjector {
      * @param {object} fingerprint - enhanced fingerprint.
      * @returns {string} - script that overrides browser fingerprint.
      */
-    _getInjectFingerprintFunctionString(fingerprint) {
+    _getInjectableFingerprintFunction(fingerprint: EnhancedFingerprint): string {
         function inject() {
-            // eslint-disable-next-line
-            const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
+            // @ts-expect-error
+            const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = window.fp;
             // override navigator
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideInstancePrototype(window.navigator, newNav);
 
             // override screen
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideInstancePrototype(window.screen, newScreen);
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideInstancePrototype(window.history, { length: historyLength });
 
             // override webGl
@@ -87,13 +99,15 @@ class FingerprintInjector {
 
             // override batteryInfo
             // eslint-disable-next-line
-            overrideBattery(navigator, 'getBattery', async () => batteryInfo);
+            overrideBattery(batteryInfo);
         }
+        
         const mainFunctionString = inject.toString();
-        return `${this.utilsString}; const fp=${JSON.stringify(fingerprint)}; (${mainFunctionString})() `;
+        
+        return `${this.utilsJs}; const fp=${JSON.stringify(fingerprint)}; (${mainFunctionString})() `;
     }
 
-    _enhanceFingerprint(fingerprint) {
+    _enhanceFingerprint(fingerprint: Fingerprint): EnhancedFingerprint {
         const {
             battery,
             navigator,
@@ -132,4 +146,3 @@ class FingerprintInjector {
     }
 }
 
-module.exports = FingerprintInjector;

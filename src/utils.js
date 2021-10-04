@@ -1,3 +1,4 @@
+
 // This file contains utils that are build and included on the window object with some randomized prefix.
 
 // some protections can mess with these to prevent the overrides - our script is first so we can reference the old values.

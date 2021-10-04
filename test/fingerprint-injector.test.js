@@ -40,7 +40,7 @@ describe('FingerprintInjector', () => {
         test('should override fingerprint in attach function', async () => {
             jest.setTimeout(60000);
             const { fingerprint } = fingerprintGenerator.getFingerprint();
-
+            console.log(fingerprint)
             await fpInjector.attachFingerprintToPlaywright(context, fingerprint);
 
             const page = await context.newPage();
