@@ -4,15 +4,5 @@
     ],
     "parserOptions": {
         "project": "tsconfig.eslint.json"
-    },
-    "overrides": [
-        {
-            "files": [
-                "test/**/*.js"
-            ],
-            "env": {
-                "jest": true
-            }
-        }
-    ]
+    }
 }

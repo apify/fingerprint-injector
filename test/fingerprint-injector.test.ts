@@ -13,7 +13,8 @@ describe('FingerprintInjector', () => {
             operatingSystems: ['linux'],
             browsers: [{ name: 'firefox', minVersion: 86 }],
         });
-        fingerprint = fingerprintGenerator.getFingerprint().fingerprint
+
+        fingerprint = fingerprintGenerator.getFingerprint().fingerprint;
 
         fpInjector = new FingerprintInjector();
     });

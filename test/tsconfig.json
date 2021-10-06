@@ -1,17 +1,14 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
-        "rootDir": "../",
-        "noEmit": true,
-        "allowJs": true
+        "rootDirs": [
+            ".",
+            "../src"
+        ],
+        "noEmit": true
     },
     "include": [
         ".",
         "../src/**/*"
-    ],
-    "references": [
-        {
-            "path": "../src"
-        }
     ]
 }

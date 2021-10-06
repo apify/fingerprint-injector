@@ -1,13 +1,8 @@
 {
     "extends": "./tsconfig.json",
     "include": [
-        "./src",
-    ],
-    "exclude": [
-        "./src/utils.js"
-    ],
-    "compilerOptions": {
-        "allowJs": true,
-        "skipLibCheck": true
-    }
+        "src",
+        "test",
+        "jest.config.ts"
+    ]
 }

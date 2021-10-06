@@ -1,17 +1,16 @@
 {
 	"name": "@apify-packages/fingerprint-injector",
 	"version": "0.5.1",
-	"main": "src/index.js",
-	"description": "Library for the injection of browser fingerprints",
+	"main": "dist/index.js",
+	"description": "Browser fingerprint injection library for playwright and puppeteer.",
 	"files": [
-		"src"
+		"dist"
 	],
 	"dependencies": {
 		"@apify/log": "^1.0.5",
 		"useragent": "^2.3.0"
 	},
 	"devDependencies": {
-		"@apify/eslint-config": "^0.1.3",
 		"@apify/eslint-config-ts": "^0.1.4",
 		"@apify/tsconfig": "^0.1.0",
 		"@types/jest": "^27.0.2",
@@ -33,12 +32,10 @@
 		"typescript": "^4.4.3"
 	},
 	"scripts": {
-		"start": "node main.js",
-		"lint": "./node_modules/.bin/eslint ./src --ext .js,.jsx",
-		"lint:fix": "./node_modules/.bin/eslint ./src --ext .js,.jsx --fix",
-		"build": "tsc",
-		"build-docs": "npm run build-toc && node docs/build-docs.js",
-		"build-toc": "markdown-toc docs/README.md -i",
+		"build": "rimraf dist && tsc",
+		"prepublishOnly": "npm run build",
+		"lint": "eslint src test",
+		"lint:fix": "eslint src test --fix",
 		"test": "jest"
 	},
 	"author": {
