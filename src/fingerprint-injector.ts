@@ -35,10 +35,10 @@ export default class FingerprintInjector {
 
     constructor() {
         this.log = log.child({ prefix: 'FingerprintInjector' });
-       
+
         // For the simplicity of calling only the constructor and avoid having a initialize method.
         this.utilsJs = fs.readFileSync(path.join(__dirname, UTILS_FILE_NAME))
-       
+
         this.log.info('Successfully initialized.');
     }
 
@@ -50,10 +50,11 @@ export default class FingerprintInjector {
     async attachFingerprintToPlaywright(browserContext: import("playwright").BrowserContext, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
 
-        this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
+        this.log.debug(`Using fingerprint`, { fingerprint: enhancedFingerprint });
+        const content = this._getInjectableFingerprintFunction(enhancedFingerprint)
 
         await browserContext.addInitScript({
-            content: this._getInjectableFingerprintFunction(enhancedFingerprint),
+            content,
         });
     }
 
@@ -64,7 +65,8 @@ export default class FingerprintInjector {
      */
     async attachFingerprintToPuppeteer(page: import("puppeteer").Page, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
-        this.log.info(`Using fingerprint`, { fingerprint: enhancedFingerprint });
+        
+        this.log.debug(`Using fingerprint`, { fingerprint: enhancedFingerprint });
 
         await page.evaluateOnNewDocument(this._getInjectableFingerprintFunction(enhancedFingerprint));
     }
@@ -78,7 +80,9 @@ export default class FingerprintInjector {
     _getInjectableFingerprintFunction(fingerprint: EnhancedFingerprint): string {
         function inject() {
             // @ts-expect-error
-            const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = window.fp;
+            const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
+            // @ts-expect-error
+            console.log(fp)
             // override navigator
             // @ts-expect-error
             overrideInstancePrototype(window.navigator, newNav);
@@ -90,20 +94,20 @@ export default class FingerprintInjector {
             overrideInstancePrototype(window.history, { length: historyLength });
 
             // override webGl
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideWebGl(webGl);
 
             // override codecs
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideCodecs(audioCodecs, videoCodecs);
 
             // override batteryInfo
-            // eslint-disable-next-line
+            // @ts-expect-error
             overrideBattery(batteryInfo);
         }
-        
-        const mainFunctionString = inject.toString();
-        
+
+        const mainFunctionString: string = inject.toString();
+
         return `${this.utilsJs}; const fp=${JSON.stringify(fingerprint)}; (${mainFunctionString})() `;
     }
 
