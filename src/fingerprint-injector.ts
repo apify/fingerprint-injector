@@ -51,9 +51,9 @@ export class FingerprintInjector {
     }
 
     /**
-     * Adds init script to the browser context so the fingerprint is changed before every document creation.
-     * @param {import("playwright").BrowserContext} browserContext - playwright browser context
-     * @param fingerprint fingerprint from `fingerprint-generator`
+     * Adds init script to the browser context, so the fingerprint is changed before every document creation.
+     * @param browserContext - playwright browser context
+     * @param fingerprint fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
     async attachFingerprintToPlaywright(browserContext: BrowserContext, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
@@ -67,9 +67,9 @@ export class FingerprintInjector {
     }
 
     /**
-     * Adds scripts that is evaluated before every document creation.
-     * @param {Page} page - puppeteer page
-     * @param fingerprint - fingerprint from `fingerprint-generator`
+     * Adds script that is evaluated before every document creation.
+     * @param page - puppeteer page
+     * @param fingerprint - fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
     async attachFingerprintToPuppeteer(page: Page, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);

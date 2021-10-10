@@ -4,7 +4,7 @@ const path = require('path');
 
 const TEMPLATE_PATH = path.join(__dirname, 'README.md');
 const README_PATH = path.resolve(__dirname, '..', 'README.md');
-const SRC_DIR = path.resolve(__dirname, '..', 'src');
+const SRC_DIR = path.resolve(__dirname, '..', 'dist');
 
 const getRenderOptions = (template, data) => ({
     template,
