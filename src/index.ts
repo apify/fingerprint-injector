@@ -1,3 +1,1 @@
-import FingerprintInjector from './fingerprint-injector';
-
-export default FingerprintInjector;
+export { FingerprintInjector, Fingerprint } from './fingerprint-injector';

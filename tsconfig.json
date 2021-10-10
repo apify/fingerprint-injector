@@ -6,6 +6,6 @@
         "skipLibCheck": true,
     },
     "include": [
-        "./src/**/*"
+        "./src"
     ]
 }

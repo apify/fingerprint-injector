@@ -1,11 +1,14 @@
-import FingerprintGenerator from 'fingerprint-generator';
 import playwright from 'playwright';
-import FingerprintInjector from '../src';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore bypass unnecessary module declaration for tests
+import FingerprintGenerator from '../node_modules/fingerprint-generator';
+
+import { Fingerprint, FingerprintInjector } from '../src';
 
 describe('FingerprintInjector', () => {
     let fpInjector: FingerprintInjector;
     let fingerprintGenerator: any;
-    let fingerprint: any;
+    let fingerprint: Fingerprint;
 
     beforeEach(() => {
         fingerprintGenerator = new FingerprintGenerator({
@@ -24,8 +27,8 @@ describe('FingerprintInjector', () => {
     });
 
     describe('Fingerprint overrides', () => {
-        let browser: import("playwright").Browser;
-        let page: import("playwright").Page;
+        let browser: import('playwright').Browser;
+        let page: import('playwright').Page;
 
         beforeEach(async () => {
             browser = await playwright.firefox.launch({ headless: false });
@@ -44,72 +47,65 @@ describe('FingerprintInjector', () => {
         });
 
         test('should override navigator', async () => {
-
-            const { navigator: navigatorFp } = fingerprint
+            const { navigator: navigatorFp } = fingerprint;
 
             const navigatorPrimitiveProperties = Object.keys(navigatorFp).filter((key) => {
-                const type = typeof navigatorFp[key]
-                return type === "string" || type === "number"
-            })
+                const type = typeof navigatorFp[key];
+                return type === 'string' || type === 'number';
+            });
 
             for (const navigatorProperty of navigatorPrimitiveProperties) {
                 const browserValue = await page.evaluate((propName) => {
-                    // @ts-expect-error
-                    return navigator[propName]
-                }, navigatorProperty)
+                    // @ts-expect-error internal browser code
+                    return navigator[propName];
+                }, navigatorProperty);
 
-                expect(browserValue).toBe(navigatorFp[navigatorProperty])
+                expect(browserValue).toBe(navigatorFp[navigatorProperty]);
             }
 
             expect.assertions(navigatorPrimitiveProperties.length);
-
         });
 
         test('should override screen', async () => {
+            const { screen: screenFp } = fingerprint;
 
-            const { screen: screenFp } = fingerprint
-
-            const screenProperties = Object.keys(screenFp)
+            const screenProperties = Object.keys(screenFp);
 
             for (const navigatorProperty of screenProperties) {
                 const browserValue = await page.evaluate((propName) => {
-                    // @ts-expect-error
-                    return screen[propName]
-                }, navigatorProperty)
+                    // @ts-expect-error internal browser code
+                    return window.screen[propName];
+                }, navigatorProperty);
 
-                expect(browserValue).toBe(screenFp[navigatorProperty])
+                expect(browserValue).toBe(screenFp[navigatorProperty]);
             }
 
             expect.assertions(screenProperties.length);
-
         });
 
         test('should override webGl', async () => {
-
-            const { webGl: {vendor, renderer} } = fingerprint
-            const [browserVendor , browserRenderer] = await page.evaluate(()=>{
-                //@ts-expect-error
+            const { webGl: { vendor, renderer } } = fingerprint;
+            const [browserVendor, browserRenderer] = await page.evaluate(() => {
+                // @ts-expect-error internal browser code
                 const canvas = document.createElement('canvas');
-                const webGl = canvas.getContext('webgl')
+                const webGl = canvas.getContext('webgl');
                 const debugInfo = webGl.getExtension('WEBGL_debug_renderer_info');
-                const vendor = webGl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                const renderer = webGl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                const loadedVendor = webGl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                const loadedRenderer = webGl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
 
-                return [vendor, renderer]
-            })
+                return [loadedVendor, loadedRenderer];
+            });
 
-            expect(browserVendor).toBe(vendor)
-            expect(browserRenderer).toBe(renderer)
-
+            expect(browserVendor).toBe(vendor);
+            expect(browserRenderer).toBe(renderer);
         });
 
         test('should override codecs', async () => {
-
             const { videoCodecs, audioCodecs } = fingerprint;
 
             for (const [codec, canPlay] of Object.entries(videoCodecs)) {
                 const canPlayBrowser = await page.evaluate((videoCodec) => {
-                    // @ts-expect-error
+                    // @ts-expect-error internal browser code
                     const videoEl = document.createElement('video');
                     return videoEl.canPlayType(`video/${videoCodec}`);
                 }, codec);
@@ -118,7 +114,7 @@ describe('FingerprintInjector', () => {
 
             for (const [codec, canPlay] of Object.entries(audioCodecs)) {
                 const canPlayBrowser = await page.evaluate((audioCodec) => {
-                    // @ts-expect-error
+                    // @ts-expect-error internal browser code
                     const audioEl = document.createElement('audio');
                     return audioEl.canPlayType(`audio/${audioCodec}`);
                 }, codec);
