@@ -1,6 +1,6 @@
 import path from 'path';
 import log, { Log } from '@apify/log';
-import * as fs from 'fs'
+import { readFileSync } from 'fs'
 import * as useragent from 'useragent';
 import { UTILS_FILE_NAME } from './constants';
 
@@ -44,7 +44,7 @@ export class FingerprintInjector {
     /**
      * Adds init script to the browser context so the fingerprint is changed before every document creation.
      * @param {BrowserContext} browserContext - playwright browser context
-     * @param {object} fingerprint - fingerprint from `fingerprint-generator`
+     * @param fingerprint fingerprint from `fingerprint-generator`
      */
     async attachFingerprintToPlaywright(browserContext: import("playwright").BrowserContext, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
