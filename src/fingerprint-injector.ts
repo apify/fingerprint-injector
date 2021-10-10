@@ -101,12 +101,20 @@ export class FingerprintInjector {
             overrideInstancePrototype(window.history, { length: historyLength });
 
             // override webGl
+            // @TODO: Find another way out of this.
+            // This feels like a dirty hack, but without this it throws while running tests.
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore Internal browser code for injection
             overrideWebGl(webGl);
 
             // override codecs
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore Internal browser code for injection
             overrideCodecs(audioCodecs, videoCodecs);
 
             // override batteryInfo
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore Internal browser code for injection
             overrideBattery(batteryInfo);
         }
 

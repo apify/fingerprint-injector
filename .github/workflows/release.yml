@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       -
+        name: Install playwright deps
+        run : npx playwright install-deps
+      -
         name: Cache Node Modules
         if: ${{ matrix.node-version == 14 }}
         uses: actions/cache@v2
@@ -39,10 +42,15 @@ jobs:
           key: cache-${{ github.run_id }}-v14
       -
         name: Install Dependencies
-        run: NODE_AUTH_TOKEN=${{secrets.PUBLISH_TOKEN}} npm install
+        run: npm install
       -
-        name: Run Tests
+        name: Run Windows or MacOs tests
         run: npm test
+        if: ${{ matrix.os == 'windows-latest' || matrix.os == 'macos-latest' }}
+      -
+        name: Run Linux tests
+        run: xvfb-run --auto-servernum -- npm test
+        if: ${{ matrix.os == 'ubuntu-latest'}}
 
   lint:
     name: Lint

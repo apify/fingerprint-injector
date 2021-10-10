@@ -6,7 +6,7 @@ export default async (): Promise<Config.InitialOptions> => ({
     testEnvironment: 'node',
     testRunner: 'jest-circus/runner',
     testTimeout: 20_000,
-    collectCoverage: true,
+    collectCoverage: false, // If true it messes the injection script and the browser is not able to execute it.
     maxWorkers: 3,
     globals: {
         'ts-jest': {
