@@ -1,18 +1,17 @@
-import * as path from 'path';
+import path from 'path';
 import log, { Log } from '@apify/log';
 import * as fs from 'fs'
 import * as useragent from 'useragent';
-import { UTILS_FILE_NAME } from "./constants"
+import { UTILS_FILE_NAME } from './constants';
 
 type EnhancedFingerprint = {
     screen: Record<string, number>,
     navigator: Record<string, any>,
     webGl: Record<string, string>,
     userAgent: string,
-    audioCodecs: Array<Record<string, string>>
-    videoCodecs: Array<Record<string, string>>
+    audioCodecs: Record<string, string>[],
+    videoCodecs: Record<string, string>[],
     batteryData?: Record<string, number>,
-
 }
 
 type Fingerprint = {
@@ -29,14 +28,14 @@ type Fingerprint = {
  * Fingerprint injector class.
  * @class
  */
-export default class FingerprintInjector {
-    log: Log
-    utilsJs: Buffer
+export class FingerprintInjector {
+    log = log.child({ prefix: 'FingerprintInjector' });
+    utilsJs = fs.readFileSync(path.join(__dirname, UTILS_FILE_NAME));
 
     constructor() {
         this.log = log.child({ prefix: 'FingerprintInjector' });
 
-        // For the simplicity of calling only the constructor and avoid having a initialize method.
+        // For the simplicity of calling only the constructor and avoid having an initialize method.
         this.utilsJs = fs.readFileSync(path.join(__dirname, UTILS_FILE_NAME))
 
         this.log.info('Successfully initialized.');
