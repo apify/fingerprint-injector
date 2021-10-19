@@ -50,8 +50,5 @@
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/apify/fingerprint-injector"
-	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/"
 	}
 }
