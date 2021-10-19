@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [10, 12, 14, 15]
+        node-version: [14, 15, 16]
 
     steps:
       -
@@ -30,6 +30,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       -
+        name: Install playwright deps
+        run : npx playwright install-deps
+      -
         name: Cache Node Modules
         if: ${{ matrix.node-version == 14 }}
         uses: actions/cache@v2
@@ -39,10 +42,15 @@ jobs:
           key: cache-${{ github.run_id }}-v14
       -
         name: Install Dependencies
-        run: NODE_AUTH_TOKEN=${{secrets.PUBLISH_TOKEN}} npm install
+        run: npm install
       -
-        name: Run Tests
+        name: Run Windows or MacOs tests
         run: npm test
+        if: ${{ matrix.os == 'windows-latest' || matrix.os == 'macos-latest' }}
+      -
+        name: Run Linux tests
+        run: xvfb-run --auto-servernum -- npm test
+        if: ${{ matrix.os == 'ubuntu-latest'}}
 
   lint:
     name: Lint
@@ -53,10 +61,10 @@ jobs:
       -
         uses: actions/checkout@v2
       -
-        name: Use Node.js 14
+        name: Use Node.js 16
         uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 16
       -
         name: Load Cache
         uses: actions/cache@v2
@@ -80,7 +88,7 @@ jobs:
       -
         uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 16
           registry-url: https://npm.pkg.github.com
       -
         # Determine if this is a beta or latest release
@@ -91,6 +99,9 @@ jobs:
         name: Bump pre-release version
         if: env.RELEASE_TAG == 'beta'
         run: node ./.github/scripts/before-beta-release.js
+      -
+        name: Install Dependencies
+        run: npm install
       -
         name: Publish to NPM
         run: NODE_AUTH_TOKEN=${{secrets.PUBLISH_TOKEN}} npm publish --tag ${{ env.RELEASE_TAG }}

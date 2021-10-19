@@ -5,4 +5,4 @@ node_modules
 package-lock.json
 coverage
 apify_storage
-src/dist
+dist

@@ -41,6 +41,7 @@ function overrideGetterWithProxy(masterObject, propertyName, proxyHandler) {
  * @param {Object} instance - instance to override such as navigator.
  * @param {Object} overrideObj - new instance values such as userAgent.
  */
+// eslint-disable-next-line no-unused-vars
 function overrideInstancePrototype(instance, overrideObj) {
     Object.keys(overrideObj).forEach((key) => {
         try {
@@ -180,6 +181,7 @@ function stripProxyFromErrors(handler) {
     return newHandler;
 }
 
+// eslint-disable-next-line no-unused-vars
 function overrideWebGl(webGl) {
     // try to override WebGl
     try {
@@ -233,6 +235,7 @@ function overrideWebGl(webGl) {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 const overrideCodecs = (audioCodecs, videoCodecs) => {
     const codecs = {
         ...audioCodecs,
@@ -272,6 +275,7 @@ const overrideCodecs = (audioCodecs, videoCodecs) => {
     );
 };
 
+// eslint-disable-next-line no-unused-vars
 function overrideBattery(batteryInfo) {
     const getBattery = {
         // eslint-disable-next-line
