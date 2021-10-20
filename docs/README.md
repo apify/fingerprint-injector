@@ -6,7 +6,8 @@ It is recommended to use this library with the Apify [`fingerprint-generator`](h
 <!-- toc -->
 
 - [Installation](#installation)
-- [Usage with playwright](#usage-with-playwright)
+- [Usage with the playwright](#usage-with-the-playwright)
+- [Usage with the puppeteer](#usage-with-the-puppeteer)
 - [API Reference](#api-reference)
 
 <!-- tocstop -->
@@ -17,7 +18,7 @@ It is recommended to use this library with the Apify [`fingerprint-generator`](h
 npm install fingerprint-injector
 ```
 
-## Usage with playwright
+## Usage with the playwright
 This example shows how to use fingerprint injector with `browser-pool` plugin system, `playwright` firefox browser, and the Apify [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
 
 ```js
@@ -38,8 +39,6 @@ const { FingerprintInjector }  = require('fingerprint-injector');
     const { fingerprint } = fingerprintGenerator.getFingerprint();
 
     const fingerprintInjector = new FingerprintInjector();
-    // Initialize fingerprint - it needs to load utils script.
-    await fingerprintInjector.initialize();
 
     const launchContext = playwrightPlugin.createLaunchContext();
     const browser = await playwrightPlugin.launch(launchContext);
@@ -52,6 +51,34 @@ const { FingerprintInjector }  = require('fingerprint-injector');
    await fingerprintInjector.attachFingerprintToPlaywright(context, fingerprint);
 
    const page = await context.newPage();
+})();
+```
+
+## Usage with the puppeteer
+This example demonstrates, how to use the fingerprint injector library with puppeteer.
+```js
+const FingerprintGenerator = require('fingerprint-generator');
+const { FingerprintInjector } = require('fingerprint-injector');
+const puppeteer = require('puppeteer')
+
+// An asynchronous IIFE (immediately invoked function expression)
+// allows us to use the 'await' keyword.
+(async () => {
+    const fingerprintInjector = new FingerprintInjector();
+
+    const fingerprintGenerator = new FingerprintGenerator({
+        devices: ['desktop'],
+        browsers: [{ name: 'chrome', minVersion: 88 }],
+    });
+
+    const { fingerprint } = fingerprintGenerator.getFingerprint();
+    const browser = puppeteer.launch({ channel: 'chrome' })
+    const page = await browser.newPage();
+    // Attach fingerprint to page
+    await fingerprintInjector.attachFingerprintToPuppeteer(page, fingerprint);
+    // Now you can use the page
+    await page.goto('https://google.com')
+
 })();
 ```
 ## API Reference
