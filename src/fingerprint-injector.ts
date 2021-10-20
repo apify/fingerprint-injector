@@ -33,8 +33,15 @@ type BrowserContext = {
     addInitScript: (options: addInitScriptOptions)=> Promise<void>
 }
 
+type Viewport = {
+    width: number
+    height: number
+}
+
 type Page = {
     evaluateOnNewDocument: (functionToEvaluate: string) => Promise<void>
+    setUserAgent: (userAgent: string) => Promise<void>
+    setViewport: (viewport: Viewport) => Promise<void>
 }
 
 /**
@@ -52,6 +59,8 @@ export class FingerprintInjector {
 
     /**
      * Adds init script to the browser context, so the fingerprint is changed before every document creation.
+     * DISCLAIMER: Since the playwright does not support changing viewport and User-agent after the context is created,
+     * you have to set it manually when the context is created. Check the playwright usage example.
      * @param browserContext - playwright browser context
      * @param fingerprint fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
@@ -68,13 +77,21 @@ export class FingerprintInjector {
 
     /**
      * Adds script that is evaluated before every document creation.
+     * Sets User-Agent and viewport using native puppeteer interface
      * @param page - puppeteer page
      * @param fingerprint - fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
     async attachFingerprintToPuppeteer(page: Page, fingerprint: Fingerprint): Promise<void> {
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
+        const { screen, userAgent } = enhancedFingerprint;
 
         this.log.debug(`Using fingerprint`, { fingerprint: enhancedFingerprint });
+        await page.setUserAgent(userAgent);
+
+        await page.setViewport({
+            width: screen.width,
+            height: screen.height,
+        });
 
         await page.evaluateOnNewDocument(this._getInjectableFingerprintFunction(enhancedFingerprint));
     }

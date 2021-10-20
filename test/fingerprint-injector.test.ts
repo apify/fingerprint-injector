@@ -1,4 +1,5 @@
 import playwright from 'playwright';
+import puppeteer from 'puppeteer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore bypass unnecessary module declaration for tests
 import FingerprintGenerator from '../node_modules/fingerprint-generator';
@@ -26,7 +27,7 @@ describe('FingerprintInjector', () => {
         expect(fpInjector.utilsJs).toBeTruthy();
     });
 
-    describe('Fingerprint overrides', () => {
+    describe('Playwright fingerprint overrides', () => {
         let browser: import('playwright').Browser;
         let page: import('playwright').Page;
 
@@ -37,7 +38,7 @@ describe('FingerprintInjector', () => {
             await fpInjector.attachFingerprintToPlaywright(context, fingerprint);
 
             page = await context.newPage();
-            await page.goto('https://google.com');
+            await page.goto(`file://${__dirname}/test.html`);
         });
 
         afterEach(async () => {
@@ -120,6 +121,37 @@ describe('FingerprintInjector', () => {
                 }, codec);
                 expect(canPlay).toEqual(canPlayBrowser);
             }
+        });
+    });
+
+    describe('Puppeteer fingerprint overrides', () => {
+        let browser: import('puppeteer').Browser;
+        let page: import('puppeteer').Page;
+
+        beforeEach(async () => {
+            browser = await puppeteer.launch({ headless: false });
+
+            page = await browser.newPage();
+            await fpInjector.attachFingerprintToPuppeteer(page, fingerprint);
+
+            await page.goto(`file://${__dirname}/test.html`);
+        });
+
+        afterEach(async () => {
+            if (browser) {
+                await browser.close();
+            }
+        });
+        test('should override user-agent and viewport', async () => {
+            // This is the only difference between playwright and puppeteer injection
+            const viewport = await page.viewport();
+            expect(viewport?.width).toEqual(fingerprint.screen.width);
+            expect(viewport?.height).toEqual(fingerprint.screen.height);
+            const userAgent = await page.evaluate(() => {
+                // @ts-expect-error internal browser code
+                return navigator.userAgent;
+            });
+            expect(userAgent).toBe(fingerprint.userAgent);
         });
     });
 });

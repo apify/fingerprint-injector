@@ -74,6 +74,8 @@ Fingerprint injector class.
 
 #### `fingerprintInjector.attachFingerprintToPlaywright(browserContext, fingerprint)`
 Adds init script to the browser context, so the fingerprint is changed before every document creation.
+DISCLAIMER: Since the playwright does not support changing viewport and User-agent after the context is created,
+you have to set it manually when the context is created. Check the playwright usage example.
 
 
 | Param | Description |
@@ -88,6 +90,7 @@ Adds init script to the browser context, so the fingerprint is changed before ev
 
 #### `fingerprintInjector.attachFingerprintToPuppeteer(page, fingerprint)`
 Adds script that is evaluated before every document creation.
+Sets User-Agent and viewport using native puppeteer interface
 
 
 | Param | Description |
