@@ -1,12 +1,12 @@
 # Fingerprint injector
-The Fingerprint injector is a sparse javascript library built for stealth override of browser signatures or so-called fingerprints. Overriding browser fingerprints is usefull for simulating real user browsers.
+The Fingerprint injector is a sparse javascript library built for stealth override of browser signatures or so-called fingerprints. Overriding browser fingerprints help simulate real user browsers.
 This library can inject fingerprints to `playwright` and `puppeteer` controlled browsers through a unified interface.
-Using this library with the Apify [`fingerprint-generator`](https://github.com/apify/fingerprint-generator) is highly recommended to achieve the best results and meet the necessary fingerprint structure.
+It is recommended to use this library with the Apify [`fingerprint-generator`](https://github.com/apify/fingerprint-generator) to achieve the best results and meet the necessary fingerprint structure.
 
 <!-- toc -->
 
 - [Installation](#installation)
-- [Usage](#usage)
+- [Usage with playwright](#usage-with-playwright)
 - [API Reference](#api-reference)
 
 <!-- tocstop -->
@@ -17,13 +17,13 @@ Using this library with the Apify [`fingerprint-generator`](https://github.com/a
 npm install fingerprint-injector
 ```
 
-## Usage
+## Usage with playwright
 This example shows how to use fingerprint injector with `browser-pool` plugin system, `playwright` firefox browser, and the Apify [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
 
 ```js
 const { PlaywrightPlugin } = require('browser-pool');
 const FingerprintGenerator = require('fingerprint-generator');
-const FingerprintInjector  = require('fingerprint-injector');
+const { FingerprintInjector }  = require('fingerprint-injector');
 
 // An asynchronous IIFE (immediately invoked function expression)
 // allows us to use the 'await' keyword.
