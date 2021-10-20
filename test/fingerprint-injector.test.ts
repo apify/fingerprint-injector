@@ -1,4 +1,3 @@
-import { platform } from 'os';
 import playwright from 'playwright';
 import puppeteer from 'puppeteer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -39,7 +38,7 @@ describe('FingerprintInjector', () => {
             await fpInjector.attachFingerprintToPlaywright(context, fingerprint);
 
             page = await context.newPage();
-            await page.goto('https://google.com');
+            await page.goto(`file://${__dirname}/test.html`);
         });
 
         afterEach(async () => {
@@ -135,7 +134,7 @@ describe('FingerprintInjector', () => {
             page = await browser.newPage();
             await fpInjector.attachFingerprintToPuppeteer(page, fingerprint);
 
-            await page.goto('https://google.com');
+            await page.goto(`file://${__dirname}/test.html`);
         });
 
         afterEach(async () => {
@@ -150,7 +149,7 @@ describe('FingerprintInjector', () => {
             expect(viewport?.height).toEqual(fingerprint.screen.height);
             const userAgent = await page.evaluate(() => {
                 // @ts-expect-error internal browser code
-                return platform.userAgent;
+                return navigator.userAgent;
             });
             expect(userAgent).toBe(fingerprint.userAgent);
         });
