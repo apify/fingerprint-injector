@@ -72,7 +72,7 @@ const puppeteer = require('puppeteer')
     });
 
     const { fingerprint } = fingerprintGenerator.getFingerprint();
-    const browser = puppeteer.launch({ channel: 'chrome' })
+    const browser = await puppeteer.launch({headless: false})
     const page = await browser.newPage();
     // Attach fingerprint to page
     await fingerprintInjector.attachFingerprintToPuppeteer(page, fingerprint);
