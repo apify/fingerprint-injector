@@ -83,7 +83,7 @@ const puppeteer = require('puppeteer')
 })();
 ```
 ## Advanced usage with the Browser pool hooks system
-This approach handles injection for both incognito context and persistent context.
+This approach handles injection for both incognito context and persistent context. It is also prepared for usage with both playwright nad puppeteer.
 
 ```js
 const { BrowserPool, PlaywrightPlugin, PuppeteerPlugin } = require('browser-pool');
