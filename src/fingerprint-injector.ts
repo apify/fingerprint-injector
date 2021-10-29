@@ -181,6 +181,7 @@ export class FingerprintInjector {
     _loadUtils(): string {
         const utilsJs = readFileSync(path.join(__dirname, UTILS_FILE_NAME));
 
+        // we need to add the new lines because of typescript initial a final comment causing issues.
         return `\n${utilsJs}\n`;
     }
 }
