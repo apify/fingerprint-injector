@@ -5,7 +5,8 @@ import puppeteer from 'puppeteer';
 import FingerprintGenerator from '../node_modules/fingerprint-generator';
 
 import { Fingerprint } from '../src';
-
+// USe fingerprint injector from dist to test if the published version works.
+// Historically injection was not working from build files, but all tests passed.
 import { FingerprintInjector } from '../dist';
 
 describe('FingerprintInjector', () => {
