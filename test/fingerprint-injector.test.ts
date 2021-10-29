@@ -4,7 +4,9 @@ import puppeteer from 'puppeteer';
 // @ts-ignore bypass unnecessary module declaration for tests
 import FingerprintGenerator from '../node_modules/fingerprint-generator';
 
-import { Fingerprint, FingerprintInjector } from '../src';
+import { Fingerprint } from '../src';
+
+import { FingerprintInjector } from '../dist';
 
 describe('FingerprintInjector', () => {
     let fpInjector: FingerprintInjector;
@@ -142,6 +144,7 @@ describe('FingerprintInjector', () => {
                 await browser.close();
             }
         });
+
         test('should override user-agent and viewport', async () => {
             // This is the only difference between playwright and puppeteer injection
             const viewport = await page.viewport();

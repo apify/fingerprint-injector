@@ -48,7 +48,7 @@
 		"prepublishOnly": "npm run build",
 		"lint": "eslint src test",
 		"lint:fix": "eslint src test --fix",
-		"test": "jest",
+		"test": "npm run build && jest",
 		"build-docs": "npm run build && npm run build-toc && node docs/build-docs.js",
 		"build-toc": "markdown-toc docs/README.md -i"
 	},

@@ -51,7 +51,7 @@ type Page = {
 export class FingerprintInjector {
     log = log.child({ prefix: 'FingerprintInjector' });
 
-    utilsJs = readFileSync(path.join(__dirname, UTILS_FILE_NAME));
+    utilsJs = this._loadUtils();
 
     constructor() {
         this.log.info('Successfully initialized.');
@@ -176,5 +176,11 @@ export class FingerprintInjector {
             batteryData,
             userAgent,
         };
+    }
+
+    _loadUtils(): string {
+        const utilsJs = readFileSync(path.join(__dirname, UTILS_FILE_NAME));
+
+        return `\n${utilsJs}\n`;
     }
 }
