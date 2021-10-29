@@ -51,7 +51,7 @@ type Page = {
 export class FingerprintInjector {
     log = log.child({ prefix: 'FingerprintInjector' });
 
-    utilsJs = readFileSync(path.join(__dirname, UTILS_FILE_NAME));
+    utilsJs = this._loadUtils();
 
     constructor() {
         this.log.info('Successfully initialized.');
@@ -102,7 +102,7 @@ export class FingerprintInjector {
      * @param fingerprint - enhanced fingerprint.
      * @returns {string} - script that overrides browser fingerprint.
      */
-    _getInjectableFingerprintFunction(fingerprint: EnhancedFingerprint): string {
+    private _getInjectableFingerprintFunction(fingerprint: EnhancedFingerprint): string {
         function inject() {
             // @ts-expect-error Internal browser code for injection
             const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
@@ -140,7 +140,7 @@ export class FingerprintInjector {
         return `(()=>{${this.utilsJs}; const fp=${JSON.stringify(fingerprint)}; (${mainFunctionString})()})()`;
     }
 
-    _enhanceFingerprint(fingerprint: Fingerprint): EnhancedFingerprint {
+    private _enhanceFingerprint(fingerprint: Fingerprint): EnhancedFingerprint {
         const {
             battery,
             navigator,
@@ -176,5 +176,12 @@ export class FingerprintInjector {
             batteryData,
             userAgent,
         };
+    }
+
+    private _loadUtils(): string {
+        const utilsJs = readFileSync(path.join(__dirname, UTILS_FILE_NAME));
+
+        // we need to add the new lines because of typescript initial a final comment causing issues.
+        return `\n${utilsJs}\n`;
     }
 }
