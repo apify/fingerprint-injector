@@ -36,6 +36,14 @@ jobs:
         name: Install Dependencies
         run: npm install
       -
+        name: Cache Node Modules
+        if: ${{ matrix.node-version == 16 }}
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+          key: cache-${{ github.run_id }}-v16
+      -
         name: Run Windows or MacOs tests
         run: npm test
         if: ${{ matrix.os == 'windows-latest' || matrix.os == 'macos-latest' }}
