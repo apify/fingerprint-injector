@@ -89,6 +89,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
+          registry-url: 'https://registry.npmjs.org'
       -
         # Determine if this is a beta or latest release
         name: Set Release Tag
@@ -106,7 +107,9 @@ jobs:
         run: echo ${{secrets.NPM_TOKEN}} token
       -
         name: Publish to NPM
-        run: NODE_AUTH_TOKEN=${{secrets.NPM_TOKEN}} npm publish --tag ${{ env.RELEASE_TAG }}
+        run: npm publish --tag ${{ env.RELEASE_TAG }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       -
         # Latest version is tagged by the release process so we only tag beta here.
         name: Tag Version
