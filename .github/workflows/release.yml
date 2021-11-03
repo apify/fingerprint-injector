@@ -103,9 +103,6 @@ jobs:
         name: Install Dependencies
         run: npm install
       -
-        name: Debug
-        run: echo ${{secrets.NPM_TOKEN}} token
-      -
         name: Publish to NPM
         run: npm publish --tag ${{ env.RELEASE_TAG }}
         env:
