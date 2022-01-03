@@ -1,1 +1,1 @@
-export { FingerprintInjector, Fingerprint } from './fingerprint-injector';
+export * from './fingerprint-injector';

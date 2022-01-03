@@ -2,6 +2,7 @@ import path from 'path';
 import log from '@apify/log';
 import { readFileSync } from 'fs';
 import * as useragent from 'useragent';
+import { BrowserFingerprintWithHeaders, Fingerprint, Headers } from 'fingerprint-generator';
 import { UTILS_FILE_NAME } from './constants';
 
 type EnhancedFingerprint = {
@@ -13,24 +14,15 @@ type EnhancedFingerprint = {
     videoCodecs: Record<string, string>[],
     batteryData?: Record<string, number>,
 }
-
-export type Fingerprint = {
-    screen: Record<string, number>,
-    navigator: Record<string, string|number|[]|undefined>,
-    webGl: Record<string, string>,
-    userAgent: string,
-    audioCodecs: Record<string, string>[],
-    videoCodecs: Record<string, string>[],
-    battery?: boolean,
-}
-
 // Supporting types
 type addInitScriptOptions = {
     content: string
 }
 
 type BrowserContext = {
-    addInitScript: (options: addInitScriptOptions)=> Promise<void>
+    addInitScript: (options: addInitScriptOptions)=> Promise<void>;
+    setExtraHTTPHeaders: (headers: Headers) => Promise<void>;
+
 }
 
 type Viewport = {
@@ -39,9 +31,10 @@ type Viewport = {
 }
 
 type Page = {
-    evaluateOnNewDocument: (functionToEvaluate: string) => Promise<void>
-    setUserAgent: (userAgent: string) => Promise<void>
-    setViewport: (viewport: Viewport) => Promise<void>
+    evaluateOnNewDocument: (functionToEvaluate: string) => Promise<void>;
+    setUserAgent: (userAgent: string) => Promise<void>;
+    setViewport: (viewport: Viewport) => Promise<void>;
+    setExtraHTTPHeaders: (headers: Headers)=> Promise<void>;
 }
 
 /**
@@ -64,11 +57,17 @@ export class FingerprintInjector {
      * @param browserContext - playwright browser context
      * @param fingerprint fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
-    async attachFingerprintToPlaywright(browserContext: BrowserContext, fingerprint: Fingerprint): Promise<void> {
+    async attachFingerprintToPlaywright(browserContext: BrowserContext, browserFingerprintWithHeaders: BrowserFingerprintWithHeaders): Promise<void> {
+        const { fingerprint, headers } = browserFingerprintWithHeaders;
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
 
         this.log.debug(`Using fingerprint`, { fingerprint: enhancedFingerprint });
         const content = this._getInjectableFingerprintFunction(enhancedFingerprint);
+
+        // Override the language properly
+        await browserContext.setExtraHTTPHeaders({
+            'accept-language': headers['accept-language'],
+        });
 
         await browserContext.addInitScript({
             content,
@@ -81,7 +80,8 @@ export class FingerprintInjector {
      * @param page - puppeteer page
      * @param fingerprint - fingerprint from [`fingerprint-generator`](https://github.com/apify/fingerprint-generator)
      */
-    async attachFingerprintToPuppeteer(page: Page, fingerprint: Fingerprint): Promise<void> {
+    async attachFingerprintToPuppeteer(page: Page, browserFingerprintWithHeaders: BrowserFingerprintWithHeaders): Promise<void> {
+        const { fingerprint, headers } = browserFingerprintWithHeaders;
         const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
         const { screen, userAgent } = enhancedFingerprint;
 
@@ -91,6 +91,10 @@ export class FingerprintInjector {
         await page.setViewport({
             width: screen.width,
             height: screen.height,
+        });
+        // Override the language properly
+        await page.setExtraHTTPHeaders({
+            'accept-language': headers['accept-language'],
         });
 
         await page.evaluateOnNewDocument(this._getInjectableFingerprintFunction(enhancedFingerprint));
@@ -146,8 +150,7 @@ export class FingerprintInjector {
             navigator,
             userAgent,
             ...rest
-        } = fingerprint;
-
+        } = fingerprint as any; // Temp fix until we release the new fp schema
         const parsedUa = useragent.parse(userAgent);
 
         if (useragent.is(userAgent).firefox) {
