@@ -2,16 +2,16 @@ import playwright from 'playwright';
 import puppeteer from 'puppeteer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore bypass unnecessary module declaration for tests
-import FingerprintGenerator from '../node_modules/fingerprint-generator';
+import { BrowserFingerprintWithHeaders, Fingerprint, FingerprintGenerator } from 'fingerprint-generator';
 
-import { Fingerprint } from '../src';
 // USe fingerprint injector from dist to test if the published version works.
 // Historically injection was not working from build files, but all tests passed.
 import { FingerprintInjector } from '../dist';
 
 describe('FingerprintInjector', () => {
     let fpInjector: FingerprintInjector;
-    let fingerprintGenerator: any;
+    let fingerprintGenerator: FingerprintGenerator;
+    let fingerprintWithHeaders: BrowserFingerprintWithHeaders;
     let fingerprint: Fingerprint;
 
     beforeEach(() => {
@@ -19,9 +19,11 @@ describe('FingerprintInjector', () => {
             devices: ['desktop'],
             operatingSystems: ['linux'],
             browsers: [{ name: 'firefox', minVersion: 86 }],
+            locales: ['cs-CZ'],
         });
 
-        fingerprint = fingerprintGenerator.getFingerprint().fingerprint;
+        fingerprintWithHeaders = fingerprintGenerator.getFingerprint();
+        fingerprint = fingerprintWithHeaders.fingerprint;
 
         fpInjector = new FingerprintInjector();
     });
@@ -33,15 +35,16 @@ describe('FingerprintInjector', () => {
     describe('Playwright fingerprint overrides', () => {
         let browser: import('playwright').Browser;
         let page: import('playwright').Page;
+        let response: any;
 
         beforeEach(async () => {
             browser = await playwright.firefox.launch({ headless: false });
 
             const context = await browser.newContext();
-            await fpInjector.attachFingerprintToPlaywright(context, fingerprint);
+            await fpInjector.attachFingerprintToPlaywright(context, fingerprintWithHeaders);
 
             page = await context.newPage();
-            await page.goto(`file://${__dirname}/test.html`);
+            response = await page.goto(`file://${__dirname}/test.html`, { waitUntil: 'commit' });
         });
 
         afterEach(async () => {
@@ -51,7 +54,7 @@ describe('FingerprintInjector', () => {
         });
 
         test('should override navigator', async () => {
-            const { navigator: navigatorFp } = fingerprint;
+            const { navigator: navigatorFp } = fingerprint as any;
 
             const navigatorPrimitiveProperties = Object.keys(navigatorFp).filter((key) => {
                 const type = typeof navigatorFp[key];
@@ -71,7 +74,7 @@ describe('FingerprintInjector', () => {
         });
 
         test('should override screen', async () => {
-            const { screen: screenFp } = fingerprint;
+            const { screen: screenFp } = fingerprint as any;
 
             const screenProperties = Object.keys(screenFp);
 
@@ -125,19 +128,27 @@ describe('FingerprintInjector', () => {
                 expect(canPlay).toEqual(canPlayBrowser);
             }
         });
+
+        test('should override locales', async () => {
+            response = await page.goto('https://google.com', { waitUntil: 'commit' });
+            const requestHeaders = response.request().headers();
+
+            expect(requestHeaders['accept-language']?.includes('cs')).toBe(true);
+        });
     });
 
     describe('Puppeteer fingerprint overrides', () => {
         let browser: import('puppeteer').Browser;
         let page: import('puppeteer').Page;
+        let response: any;
 
         beforeEach(async () => {
             browser = await puppeteer.launch({ headless: false });
 
             page = await browser.newPage();
-            await fpInjector.attachFingerprintToPuppeteer(page, fingerprint);
+            await fpInjector.attachFingerprintToPuppeteer(page, fingerprintWithHeaders);
 
-            await page.goto(`file://${__dirname}/test.html`);
+            response = await page.goto(`file://${__dirname}/test.html`);
         });
 
         afterEach(async () => {
@@ -156,6 +167,12 @@ describe('FingerprintInjector', () => {
                 return navigator.userAgent;
             });
             expect(userAgent).toBe(fingerprint.userAgent);
+        });
+
+        test('should override locales', async () => {
+            const requestHeaders = response.request().headers();
+
+            expect(requestHeaders['accept-language']?.includes('cs')).toBe(true);
         });
     });
 });
