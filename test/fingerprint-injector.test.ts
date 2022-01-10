@@ -6,7 +6,7 @@ import { BrowserFingerprintWithHeaders, Fingerprint, FingerprintGenerator } from
 
 // USe fingerprint injector from dist to test if the published version works.
 // Historically injection was not working from build files, but all tests passed.
-import { FingerprintInjector } from '../dist';
+import { FingerprintInjector } from '../src';
 
 describe('FingerprintInjector', () => {
     let fpInjector: FingerprintInjector;
@@ -143,7 +143,10 @@ describe('FingerprintInjector', () => {
         let response: any;
 
         beforeEach(async () => {
-            browser = await puppeteer.launch({ headless: false });
+            fingerprintWithHeaders = fingerprintGenerator.getFingerprint({ browsers: [{ name: 'chrome', minVersion: 90 }] });
+            fingerprint = fingerprintWithHeaders.fingerprint;
+
+            browser = await puppeteer.launch({ headless: false, channel: 'chrome' });
 
             page = await browser.newPage();
             await fpInjector.attachFingerprintToPuppeteer(page, fingerprintWithHeaders);
@@ -173,6 +176,12 @@ describe('FingerprintInjector', () => {
             const requestHeaders = response.request().headers();
 
             expect(requestHeaders['accept-language']?.includes('cs')).toBe(true);
+        });
+
+        test('should override plugins', async () => {
+            // @ts-expect-error browser code
+            const plugins = await page.evaluate(() => navigator.mimeTypes);
+            expect(plugins).toHaveLength(1);
         });
     });
 });

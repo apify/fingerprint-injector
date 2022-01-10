@@ -56,6 +56,204 @@ function overrideInstancePrototype(instance, overrideObj) {
     });
 }
 
+/**
+ * Generate a convincing and functional MimeType or Plugin array from scratch.
+ */
+function generateMagicArray(
+    pluginsOrMimeTypes = [],
+    proto = MimeTypeArray.prototype,
+    itemProto = MimeType.prototype,
+    itemMainProp = 'type',
+) {
+    // Quick helper to set props with the same descriptors vanilla is using
+    const defineProp = (obj, prop, value) => Object.defineProperty(obj, prop, {
+        value,
+        writable: false,
+        enumerable: false, // Important for mimeTypes & plugins: `JSON.stringify(navigator.mimeTypes)`
+        configurable: true,
+    });
+
+    // Loop over our fake data and construct items
+    const makeItem = (data) => {
+        const item = {};
+        for (const prop of Object.keys(data)) {
+            if (prop.startsWith('__')) {
+                // eslint-disable-next-line no-continue
+                continue;
+            }
+            defineProp(item, prop, data[prop]);
+        }
+        return patchItem(item, data);
+    };
+
+    const patchItem = (item, data) => {
+        let descriptor = Object.getOwnPropertyDescriptors(item);
+
+        // Special case: Plugins have a magic length property which is not enumerable
+        // e.g. `navigator.plugins[i].length` should always be the length of the assigned mimeTypes
+        if (itemProto === Plugin.prototype) {
+            descriptor = {
+                ...descriptor,
+                length: {
+                    // eslint-disable-next-line no-underscore-dangle
+                    value: data.__mimeTypes.length,
+                    writable: false,
+                    enumerable: false,
+                    configurable: true, // Important to be able to use the ownKeys trap in a Proxy to strip `length`
+                },
+            };
+        }
+
+        // We need to spoof a specific `MimeType` or `Plugin` object
+        const obj = Object.create(itemProto, descriptor);
+
+        // Virtually all property keys are not enumerable in vanilla
+        const blacklist = [...Object.keys(data), 'length', 'enabledPlugin'];
+        return new Proxy(obj, {
+            ownKeys(target) {
+                return Reflect.ownKeys(target).filter((k) => !blacklist.includes(k));
+            },
+            getOwnPropertyDescriptor(target, prop) {
+                if (blacklist.includes(prop)) {
+                    return undefined;
+                }
+                return Reflect.getOwnPropertyDescriptor(target, prop);
+            },
+        });
+    };
+
+    const magicArray = [];
+
+    // Loop through our fake data and use that to create convincing entities
+    pluginsOrMimeTypes.forEach((data) => {
+        magicArray.push(makeItem(data));
+    });
+
+    // Add direct property access  based on types (e.g. `obj['application/pdf']`) afterwards
+    magicArray.forEach((entry) => {
+        defineProp(magicArray, entry[itemMainProp], entry);
+    });
+
+    // This is the best way to fake the type to make sure this is false: `Array.isArray(navigator.mimeTypes)`
+    const magicArrayObj = Object.create(proto, {
+        ...Object.getOwnPropertyDescriptors(magicArray),
+
+        // There's one ugly quirk we unfortunately need to take care of:
+        // The `MimeTypeArray` prototype has an enumerable `length` property,
+        // but headful Chrome will still skip it when running `Object.getOwnPropertyNames(navigator.mimeTypes)`.
+        // To strip it we need to make it first `configurable` and can then overlay a Proxy with an `ownKeys` trap.
+        length: {
+            value: magicArray.length,
+            writable: false,
+            enumerable: false,
+            configurable: true, // Important to be able to use the ownKeys trap in a Proxy to strip `length`
+        },
+    });
+
+    // Generate our functional function mocks :-)
+    const functionMocks = overridePropertyWithProxy(
+        proto,
+        itemMainProp,
+        magicArray,
+    );
+
+    // We need to overlay our custom object with a JS Proxy
+    const magicArrayObjProxy = new Proxy(magicArrayObj, {
+        get(target, key = '') {
+            // Redirect function calls to our custom proxied versions mocking the vanilla behavior
+            if (key === 'item') {
+                return functionMocks.item;
+            }
+            if (key === 'namedItem') {
+                return functionMocks.namedItem;
+            }
+            if (proto === PluginArray.prototype && key === 'refresh') {
+                return functionMocks.refresh;
+            }
+            // Everything else can pass through as normal
+            // eslint-disable-next-line prefer-rest-params
+            return cache.Reflect.get(...arguments);
+        },
+        ownKeys(target) {
+            // There are a couple of quirks where the original property demonstrates "magical" behavior that makes no sense
+            // This can be witnessed when calling `Object.getOwnPropertyNames(navigator.mimeTypes)` and the absense of `length`
+            // My guess is that it has to do with the recent change of not allowing data enumeration and this being implemented weirdly
+            // For that reason we just completely fake the available property names based on our data to match what regular Chrome is doing
+            // Specific issues when not patching this: `length` property is available,
+            //  direct `types` props (e.g. `obj['application/pdf']`) are missing
+            const keys = [];
+            const typeProps = magicArray.map((mt) => mt[itemMainProp]);
+            typeProps.forEach((_, i) => keys.push(`${i}`));
+            typeProps.forEach((propName) => keys.push(propName));
+            return keys;
+        },
+        getOwnPropertyDescriptor(target, prop) {
+            if (prop === 'length') {
+                return undefined;
+            }
+            return Reflect.getOwnPropertyDescriptor(target, prop);
+        },
+    });
+
+    return magicArrayObjProxy;
+}
+
+// eslint-disable-next-line no-unused-vars
+function overridePluginsAndMimeTypes(pluginsData) {
+    const { mimeTypes, plugins } = pluginsData;
+
+    const hasPlugins = 'plugins' in navigator && navigator.plugins.length;
+
+    if (!hasPlugins) {
+        return; // nothing to do here plugins not supported by the browser
+    }
+
+    const magicMimeTypes = generateMagicArray(
+        mimeTypes,
+        MimeTypeArray.prototype,
+        MimeType.prototype,
+        'type',
+    );
+
+    const magicPlugins = generateMagicArray(
+        plugins,
+        PluginArray.prototype,
+        Plugin.prototype,
+        'name',
+    );
+
+    for (const pluginData of plugins) {
+        pluginData.mime.forEach((type, index) => {
+            magicPlugins[pluginData.name][index] = magicMimeTypes[type];
+
+            Object.defineProperty(magicPlugins[pluginData.name], type, {
+                value: magicMimeTypes[type],
+                writable: false,
+                enumerable: false, // Not enumerable
+                configurable: true,
+            });
+            Object.defineProperty(magicMimeTypes[type], 'enabledPlugin', {
+                value:
+                    type === 'application/x-pnacl'
+                        ? mimeTypes['application/x-nacl'].enabledPlugin // these reference the same plugin, so we need to re-use the Proxy in order to avoid leaks
+                        : new Proxy(magicPlugins[pluginData.name], {}), // Prevent circular references
+                writable: false,
+                enumerable: false, // Important: `JSON.stringify(navigator.plugins)`
+                configurable: true,
+            });
+        });
+    }
+
+    const patchNavigator = (name, value) => redefineProperty(Object.getPrototypeOf(navigator), name, {
+        get() {
+            return value;
+        },
+    });
+
+    patchNavigator('mimeTypes', mimeTypes);
+    patchNavigator('plugins', plugins);
+}
+
 function redirectToString(proxyObj, originalObj) {
     const handler = {
         apply(target, ctx) {
@@ -234,7 +432,9 @@ function overrideWebGl(webGl) {
         console.warn(err);
     }
 }
+function injectPlugins(plugins) {
 
+}
 // eslint-disable-next-line no-unused-vars
 const overrideCodecs = (audioCodecs, videoCodecs) => {
     const codecs = {
