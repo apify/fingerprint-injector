@@ -55,6 +55,56 @@ function overrideInstancePrototype(instance, overrideObj) {
         }
     });
 }
+// Creates undetectable proxy
+function createStealthProxy(pseudoTarget, handler) {
+    const proxyObj = new Proxy(pseudoTarget, stripProxyFromErrors(handler));
+    redirectToString(proxyObj);
+
+    return proxyObj;
+}
+
+// `navigator.{plugins,mimeTypes}` share similar custom functions to look up properties.
+function generatePluginFunctionMocks(proto, itemMainProp, dataArray) {
+    return {
+        /** Returns the MimeType object with the specified index. */
+        item: createStealthProxy(proto.item, {
+            apply(target, ctx, args) {
+                if (!args.length) {
+                    throw new TypeError(
+                        `Failed to execute 'item' on '${proto[Symbol.toStringTag]
+                        }': 1 argument required, but only 0 present.`,
+                    );
+                }
+                // Special behavior alert:
+                // - Vanilla tries to cast strings to Numbers (only integers!) and use them as property index lookup
+                // - If anything else than an integer (including as string) is provided it will return the first entry
+                const isInteger = args[0] && Number.isInteger(Number(args[0])); // Cast potential string to number first, then check for integer
+                // Note: Vanilla never returns `undefined`
+                return (isInteger ? dataArray[Number(args[0])] : dataArray[0]) || null;
+            },
+        }),
+        /** Returns the MimeType object with the specified name. */
+        namedItem: createStealthProxy(proto.namedItem, {
+            apply(target, ctx, args) {
+                if (!args.length) {
+                    throw new TypeError(
+                        `Failed to execute 'namedItem' on '${proto[Symbol.toStringTag]
+                        }': 1 argument required, but only 0 present.`,
+                    );
+                }
+                return dataArray.find((mt) => mt[itemMainProp] === args[0]) || null; // Not `undefined`!
+            },
+        }),
+        /** Does nothing and shall return nothing */
+        refresh: proto.refresh
+            ? createStealthProxy(proto.refresh, {
+                apply(target, ctx, args) {
+                    return undefined;
+                },
+            })
+            : undefined,
+    };
+}
 
 /**
  * Generate a convincing and functional MimeType or Plugin array from scratch.
@@ -78,6 +128,7 @@ function generateMagicArray(
         const item = {};
         for (const prop of Object.keys(data)) {
             if (prop.startsWith('__')) {
+                // ignore interconnection attributes
                 // eslint-disable-next-line no-continue
                 continue;
             }
@@ -109,7 +160,7 @@ function generateMagicArray(
 
         // Virtually all property keys are not enumerable in vanilla
         const blacklist = [...Object.keys(data), 'length', 'enabledPlugin'];
-        return new Proxy(obj, {
+        return createStealthProxy(obj, {
             ownKeys(target) {
                 return Reflect.ownKeys(target).filter((k) => !blacklist.includes(k));
             },
@@ -150,15 +201,15 @@ function generateMagicArray(
         },
     });
 
-    // Generate our functional function mocks :-)
-    const functionMocks = overridePropertyWithProxy(
+    // Generate our functional function mocks to mask the tweaks.
+    const functionMocks = generatePluginFunctionMocks(
         proto,
         itemMainProp,
         magicArray,
     );
 
     // We need to overlay our custom object with a JS Proxy
-    const magicArrayObjProxy = new Proxy(magicArrayObj, {
+    const magicArrayObjProxy = createStealthProxy(magicArrayObj, {
         get(target, key = '') {
             // Redirect function calls to our custom proxied versions mocking the vanilla behavior
             if (key === 'item') {
@@ -207,13 +258,14 @@ function overridePluginsAndMimeTypes(pluginsData) {
     if (!hasPlugins) {
         return; // nothing to do here plugins not supported by the browser
     }
-
+    console.log(mimeTypes, plugins);
     const magicMimeTypes = generateMagicArray(
         mimeTypes,
         MimeTypeArray.prototype,
         MimeType.prototype,
         'type',
     );
+    console.log('mimeTypes generated');
 
     const magicPlugins = generateMagicArray(
         plugins,
@@ -221,22 +273,22 @@ function overridePluginsAndMimeTypes(pluginsData) {
         Plugin.prototype,
         'name',
     );
+    console.log('plugins generated');
 
-    for (const pluginData of plugins) {
-        pluginData.mime.forEach((type, index) => {
-            magicPlugins[pluginData.name][index] = magicMimeTypes[type];
+    for (const plugin of plugins) {
+        console.log(plugin);
+        plugin.__mimeTypes.forEach((type, index) => {
+            magicPlugins[plugin.name][index] = magicMimeTypes[type];
 
-            Object.defineProperty(magicPlugins[pluginData.name], type, {
+            Object.defineProperty(magicPlugins[plugin.name], type, {
                 value: magicMimeTypes[type],
                 writable: false,
                 enumerable: false, // Not enumerable
                 configurable: true,
             });
+
             Object.defineProperty(magicMimeTypes[type], 'enabledPlugin', {
-                value:
-                    type === 'application/x-pnacl'
-                        ? mimeTypes['application/x-nacl'].enabledPlugin // these reference the same plugin, so we need to re-use the Proxy in order to avoid leaks
-                        : new Proxy(magicPlugins[pluginData.name], {}), // Prevent circular references
+                value: magicPlugins[plugin.name], // @TODO: Original implementation prevented circular references, But they should be circular IMHO.
                 writable: false,
                 enumerable: false, // Important: `JSON.stringify(navigator.plugins)`
                 configurable: true,
@@ -250,8 +302,8 @@ function overridePluginsAndMimeTypes(pluginsData) {
         },
     });
 
-    patchNavigator('mimeTypes', mimeTypes);
-    patchNavigator('plugins', plugins);
+    patchNavigator('mimeTypes', magicMimeTypes);
+    patchNavigator('plugins', magicPlugins);
 }
 
 function redirectToString(proxyObj, originalObj) {
@@ -432,9 +484,7 @@ function overrideWebGl(webGl) {
         console.warn(err);
     }
 }
-function injectPlugins(plugins) {
 
-}
 // eslint-disable-next-line no-unused-vars
 const overrideCodecs = (audioCodecs, videoCodecs) => {
     const codecs = {
@@ -452,7 +502,7 @@ const overrideCodecs = (audioCodecs, videoCodecs) => {
 
     const canPlayType = {
         // eslint-disable-next-line
-        apply: function(target, ctx, args) {
+        apply: function (target, ctx, args) {
             if (!args || !args.length) {
                 return target.apply(ctx, args);
             }

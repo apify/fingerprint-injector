@@ -140,7 +140,7 @@ export class FingerprintInjector {
 
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore Internal browser code for injection
-            overridePluginsAndMimeTypes(pluginsData);
+            // overridePluginsAndMimeTypes(pluginsData);
         }
 
         const mainFunctionString: string = inject.toString();
@@ -180,17 +180,10 @@ export class FingerprintInjector {
 
         const { plugins, mimeTypes } = pluginsData;
 
+        let regeneratedPluginsData;
+
         if (plugins?.length && mimeTypes?.length) {
-            const transformedMimeTypes = mimeTypes.map((mimeType: string) => {
-                const [description, type, suffixes] = mimeType.split('~~');
-                return { description, type, suffixes };
-            });
-            pluginsData.mimeTypes = transformedMimeTypes;
-            // Get mimeTypes from plugins.
-            // Reference the mimeType to the plugin and vice versa.
-            // If plugin has multiple mimeTypes use only one proxy to avoid detection
-            // 
-            pluginsData.plugins = plugins.map(({})=>({}))
+            regeneratedPluginsData = this._regeneratePluginData(plugins);
         }
 
         return {
@@ -198,7 +191,34 @@ export class FingerprintInjector {
             navigator,
             batteryData,
             userAgent,
+            pluginsData: regeneratedPluginsData,
         };
+    }
+
+    _regeneratePluginData(rawPlugins: any[]) {
+        const mimeTypes = [];
+        const plugins = [];
+
+        for (const plugin of rawPlugins) {
+            const pluginMimeTypes = [];
+            for (const mimeType of plugin.mimeTypes) {
+                mimeTypes.push({
+                    __pluginName: mimeType.enabledPlugin,
+                    type: mimeType.type,
+                    suffixes: mimeType.suffixes,
+                    description: mimeType.description,
+                });
+                pluginMimeTypes.push(mimeType.type);
+            }
+            plugins.push({
+                name: plugin.name,
+                describtion: plugin.description,
+                filename: plugin.filename,
+                __mimeTypes: pluginMimeTypes,
+            });
+        }
+
+        return { mimeTypes, plugins };
     }
 
     private _loadUtils(): string {

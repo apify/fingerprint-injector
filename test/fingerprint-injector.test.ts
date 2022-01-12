@@ -151,7 +151,7 @@ describe('FingerprintInjector', () => {
             page = await browser.newPage();
             await fpInjector.attachFingerprintToPuppeteer(page, fingerprintWithHeaders);
 
-            response = await page.goto(`file://${__dirname}/test.html`);
+            response = await page.goto('https://abrahamjuliot.github.io/creepjs/'); // `file://${__dirname}/test.html`
         });
 
         afterEach(async () => {
