@@ -73,25 +73,107 @@ describe('FingerprintInjector', () => {
             expect.assertions(navigatorPrimitiveProperties.length);
         });
 
-        test('should override screen', async () => {
+        test('should override window.screen', async () => {
             const { screen: screenFp } = fingerprint as any;
+            const {
+                availHeight,
+                availWidth,
+                pixelDepth,
+                height,
+                width,
+                availTop,
+                availLeft,
+                colorDepth,
+            } = screenFp;
+            const screenObj = {
+                availHeight,
+                availWidth,
+                pixelDepth,
+                height,
+                width,
+                availTop,
+                availLeft,
+                colorDepth,
+            };
 
-            const screenProperties = Object.keys(screenFp);
+            const screenProperties = Object.keys(screenObj);
 
-            for (const navigatorProperty of screenProperties) {
+            for (const screenProperty of screenProperties) {
                 const browserValue = await page.evaluate((propName) => {
                     // @ts-expect-error internal browser code
                     return window.screen[propName];
-                }, navigatorProperty);
+                }, screenProperty);
 
-                expect(browserValue).toBe(screenFp[navigatorProperty]);
+                expect(browserValue).toBe(screenFp[screenProperty]);
+            }
+
+            expect.assertions(screenProperties.length);
+        });
+
+        test('should override screen props on window', async () => {
+            const { screen } = fingerprint as any;
+            const {
+                innerHeight,
+                outerHeight,
+                outerWidth,
+                innerWidth,
+                screenX,
+                pageXOffset,
+                pageYOffset,
+                devicePixelRatio,
+            } = screen;
+            const screenObj = {
+                innerHeight,
+                outerHeight,
+                outerWidth,
+                innerWidth,
+                screenX,
+                pageXOffset,
+                pageYOffset,
+                devicePixelRatio,
+            };
+
+            const screenProperties = Object.keys(screenObj);
+
+            for (const screenProperty of screenProperties) {
+                const browserValue = await page.evaluate((propName) => {
+                    // @ts-expect-error internal browser code
+                    return window[propName];
+                }, screenProperty);
+
+                expect(browserValue).toBe(screen[screenProperty]);
+            }
+
+            expect.assertions(screenProperties.length);
+        });
+
+        test('should override screen props on document', async () => {
+            const { screen } = fingerprint as any;
+            const {
+                clientHeight,
+                clientWidth,
+            } = screen;
+            const screenObj = {
+                clientHeight,
+                clientWidth,
+            };
+
+            const screenProperties = Object.keys(screenObj);
+
+            for (const screenProperty of screenProperties) {
+                const browserValue = await page.evaluate((propName) => {
+                    // @ts-expect-error internal browser code
+                    return window.document.body[propName];
+                }, screenProperty);
+
+                expect(browserValue).toBe(screen[screenProperty]);
             }
 
             expect.assertions(screenProperties.length);
         });
 
         test('should override webGl', async () => {
-            const { webGl: { vendor, renderer } } = fingerprint;
+            const { videoCard: { vendor, renderer } } = fingerprint;
             const [browserVendor, browserRenderer] = await page.evaluate(() => {
                 // @ts-expect-error internal browser code
                 const canvas = document.createElement('canvas');
@@ -166,7 +248,7 @@ describe('FingerprintInjector', () => {
                 // @ts-expect-error internal browser code
                 return navigator.userAgent;
             });
-            expect(userAgent).toBe(fingerprint.userAgent);
+            expect(userAgent).toBe(fingerprint.navigator.userAgent);
         });
 
         test('should override locales', async () => {

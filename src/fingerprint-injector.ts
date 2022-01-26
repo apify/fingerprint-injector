@@ -1,40 +1,34 @@
 import path from 'path';
 import log from '@apify/log';
 import { readFileSync } from 'fs';
-import * as useragent from 'useragent';
 import { BrowserFingerprintWithHeaders, Fingerprint, Headers } from 'fingerprint-generator';
 import { UTILS_FILE_NAME } from './constants';
 
-type EnhancedFingerprint = {
-    screen: Record<string, number>,
-    navigator: Record<string, any>,
-    webGl: Record<string, string>,
-    userAgent: string,
-    audioCodecs: Record<string, string>[],
-    videoCodecs: Record<string, string>[],
-    batteryData?: Record<string, number>,
+interface EnhancedFingerprint extends Fingerprint {
+    userAgent: string;
+    historyLength: number;
 }
 // Supporting types
 type addInitScriptOptions = {
-    content: string
+    content: string;
 }
 
 type BrowserContext = {
-    addInitScript: (options: addInitScriptOptions)=> Promise<void>;
+    addInitScript: (options: addInitScriptOptions) => Promise<void>;
     setExtraHTTPHeaders: (headers: Headers) => Promise<void>;
 
 }
 
 type Viewport = {
-    width: number
-    height: number
+    width: number;
+    height: number;
 }
 
 type Page = {
     evaluateOnNewDocument: (functionToEvaluate: string) => Promise<void>;
     setUserAgent: (userAgent: string) => Promise<void>;
     setViewport: (viewport: Viewport) => Promise<void>;
-    setExtraHTTPHeaders: (headers: Headers)=> Promise<void>;
+    setExtraHTTPHeaders: (headers: Headers) => Promise<void>;
 }
 
 /**
@@ -108,16 +102,62 @@ export class FingerprintInjector {
      */
     private _getInjectableFingerprintFunction(fingerprint: EnhancedFingerprint): string {
         function inject() {
-            // @ts-expect-error Internal browser code for injection
-            const { batteryInfo, navigator: newNav, screen: newScreen, webGl, historyLength, audioCodecs, videoCodecs } = fp;
+            const {
+                batteryInfo,
+                navigator: {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    extraProperties,
+                    ...navigatorProps
+                },
+                screen: allScreenProps,
+                videoCard,
+                historyLength,
+                audioCodecs,
+                videoCodecs,
+                // @ts-expect-error internal browser code
+            } = fp;
 
+            const {
+                // window screen props
+                innerHeight,
+                outerHeight,
+                outerWidth,
+                innerWidth,
+                screenX,
+                pageXOffset,
+                pageYOffset,
+                devicePixelRatio,
+                // Document screen props
+                clientWidth,
+                clientHeight,
+
+                // window.screen props
+                ...newScreen
+            } = allScreenProps;
+
+            const windowScreenProps = {
+                innerHeight,
+                outerHeight,
+                outerWidth,
+                innerWidth,
+                screenX,
+                pageXOffset,
+                pageYOffset,
+                devicePixelRatio,
+            };
+            const documentScreenProps = {
+                clientHeight,
+                clientWidth,
+            };
             // override navigator
             // @ts-expect-error Internal browser code for injection
-            overrideInstancePrototype(window.navigator, newNav);
+            overrideInstancePrototype(window.navigator, navigatorProps);
 
             // override screen
             // @ts-expect-error Internal browser code for injection
             overrideInstancePrototype(window.screen, newScreen);
+            overrideWindowDimensionsProps(windowScreenProps);
+            overrideDocumentDimensionsProps(documentScreenProps);
             // @ts-expect-error Internal browser code for injection
             overrideInstancePrototype(window.history, { length: historyLength });
 
@@ -126,7 +166,7 @@ export class FingerprintInjector {
             // This feels like a dirty hack, but without this it throws while running tests.
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore Internal browser code for injection
-            overrideWebGl(webGl);
+            overrideWebGl(videoCard);
 
             // override codecs
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -146,38 +186,15 @@ export class FingerprintInjector {
 
     private _enhanceFingerprint(fingerprint: Fingerprint): EnhancedFingerprint {
         const {
-            battery,
             navigator,
-            userAgent,
             ...rest
-        } = fingerprint as any; // Temp fix until we release the new fp schema
-        const parsedUa = useragent.parse(userAgent);
-
-        if (useragent.is(userAgent).firefox) {
-            navigator.vendor = '';
-
-            const os = parsedUa.os.toString();
-            const [major, minor] = parsedUa.os.toVersion().split('.');
-
-            if (os.toLowerCase().includes('windows')) {
-                navigator.oscpu = userAgent.includes('x64') ? `Windows NT ${major}.${minor}; Win64; x64` : `Windows NT ${major}.${minor};`;
-            } else if (os.toLowerCase().includes('mac')) {
-                navigator.oscpu = `Intel Mac OS X ${major}.${minor}`;
-            } else if (os.toLowerCase().includes('ubuntu')) {
-                navigator.oscpu = 'Linux x86_64';
-            }
-        }
-        let batteryData;
-
-        if (battery) {
-            batteryData = { level: 0.25, chargingTime: 322, dischargingTime: Infinity }; // TODO: randomize
-        }
+        } = fingerprint;
 
         return {
             ...rest,
             navigator,
-            batteryData,
-            userAgent,
+            userAgent: navigator.userAgent,
+            historyLength: this._randomInRange(2, 6),
         };
     }
 
@@ -187,4 +204,10 @@ export class FingerprintInjector {
         // we need to add the new lines because of typescript initial a final comment causing issues.
         return `\n${utilsJs}\n`;
     }
+
+    private _randomInRange(min: number, max: number): number {
+        return Math.floor(
+            Math.random() * (max - min) + min,
+        );
+    };
 }

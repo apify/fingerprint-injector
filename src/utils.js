@@ -307,3 +307,18 @@ function makeHandler() {
         }),
     };
 }
+function overrideScreenByReassigning(target, newProperties) {
+    for (const [prop, value] of Object.entries(newProperties)) {
+        if (prop > 0) {
+            target[prop] = value;
+        }
+    }
+}
+
+function overrideWindowDimensionsProps(props) {
+    overrideScreenByReassigning(window, props);
+}
+
+function overrideDocumentDimensionsProps(props) {
+    overrideScreenByReassigning(window.document.body, props);
+}
