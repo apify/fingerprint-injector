@@ -319,10 +319,16 @@ function overrideScreenByReassigning(target, newProperties) {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 function overrideWindowDimensionsProps(props) {
     overrideScreenByReassigning(window, props);
 }
 
+// eslint-disable-next-line no-unused-vars
 function overrideDocumentDimensionsProps(props) {
     overrideScreenByReassigning(window.document.body, props);
+}
+
+function overrideUserAgentData(userAgentData){
+    
 }

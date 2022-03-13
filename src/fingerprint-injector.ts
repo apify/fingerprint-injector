@@ -118,6 +118,7 @@ export class FingerprintInjector {
                 navigator: {
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     extraProperties,
+                    userAgentData,
                     ...navigatorProps
                 },
                 screen: allScreenProps,
@@ -166,6 +167,11 @@ export class FingerprintInjector {
             // override navigator
             // @ts-expect-error Internal browser code for injection
             overrideInstancePrototype(window.navigator, navigatorProps);
+
+            if (userAgentData) {
+                // @ts-expect-error Internal browser code for injection
+                overrideInstancePrototype(window.navigator.userAgentData, userAgentData);
+            }
 
             // override screen
             // @ts-expect-error Internal browser code for injection
