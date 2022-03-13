@@ -95,6 +95,17 @@ export class FingerprintInjector {
     }
 
     /**
+     * Gets the override script that should be evaluated in the browser.
+     */
+    getInjectableScript(browserFingerprintWithHeaders: BrowserFingerprintWithHeaders): string {
+        const { fingerprint } = browserFingerprintWithHeaders;
+        const enhancedFingerprint = this._enhanceFingerprint(fingerprint);
+
+        this.log.debug(`Using fingerprint`, { fingerprint: enhancedFingerprint });
+        return this._getInjectableFingerprintFunction(enhancedFingerprint);
+    }
+
+    /**
      * Create injection function string.
      * @private
      * @param fingerprint - enhanced fingerprint.
