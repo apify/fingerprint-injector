@@ -105,6 +105,7 @@ export class FingerprintInjector {
             const {
                 batteryInfo,
                 navigator: {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     extraProperties,
                     ...navigatorProps
                 },
