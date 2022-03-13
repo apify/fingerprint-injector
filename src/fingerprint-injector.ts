@@ -105,7 +105,6 @@ export class FingerprintInjector {
             const {
                 batteryInfo,
                 navigator: {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     extraProperties,
                     ...navigatorProps
                 },
@@ -119,18 +118,21 @@ export class FingerprintInjector {
 
             const {
                 // window screen props
-                innerHeight,
                 outerHeight,
                 outerWidth,
+                devicePixelRatio,
                 innerWidth,
+                innerHeight,
                 screenX,
                 pageXOffset,
                 pageYOffset,
-                devicePixelRatio,
+
                 // Document screen props
                 clientWidth,
                 clientHeight,
-
+                // Ignore hdr for now.
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                hasHDR,
                 // window.screen props
                 ...newScreen
             } = allScreenProps;

@@ -66,7 +66,6 @@ describe('FingerprintInjector', () => {
                     // @ts-expect-error internal browser code
                     return navigator[propName];
                 }, navigatorProperty);
-
                 expect(browserValue).toBe(navigatorFp[navigatorProperty]);
             }
 
@@ -113,60 +112,30 @@ describe('FingerprintInjector', () => {
         test('should override screen props on window', async () => {
             const { screen } = fingerprint as any;
             const {
-                innerHeight,
                 outerHeight,
                 outerWidth,
-                innerWidth,
-                screenX,
-                pageXOffset,
-                pageYOffset,
                 devicePixelRatio,
             } = screen;
             const screenObj = {
-                innerHeight,
                 outerHeight,
                 outerWidth,
-                innerWidth,
-                screenX,
-                pageXOffset,
-                pageYOffset,
                 devicePixelRatio,
             };
 
             const screenProperties = Object.keys(screenObj);
 
             for (const screenProperty of screenProperties) {
-                const browserValue = await page.evaluate((propName) => {
-                    // @ts-expect-error internal browser code
-                    return window[propName];
-                }, screenProperty);
+                const propValue = screen[screenProperty];
+                // The 0 values are introduced by collecting in the hidden iframe.
+                // They are document sizes anyway so no need to test them or inject them.
+                if (propValue > 0) {
+                    const browserValue = await page.evaluate((propName) => {
+                        // @ts-expect-error internal browser code
+                        return window[propName];
+                    }, screenProperty);
 
-                expect(browserValue).toBe(screen[screenProperty]);
-            }
-
-            expect.assertions(screenProperties.length);
-        });
-
-        test('should override screen props on document', async () => {
-            const { screen } = fingerprint as any;
-            const {
-                clientHeight,
-                clientWidth,
-            } = screen;
-            const screenObj = {
-                clientHeight,
-                clientWidth,
-            };
-
-            const screenProperties = Object.keys(screenObj);
-
-            for (const screenProperty of screenProperties) {
-                const browserValue = await page.evaluate((propName) => {
-                    // @ts-expect-error internal browser code
-                    return window.document.body[propName];
-                }, screenProperty);
-
-                expect(browserValue).toBe(screen[screenProperty]);
+                    expect(browserValue).toBe(screen[screenProperty]);
+                }
             }
 
             expect.assertions(screenProperties.length);

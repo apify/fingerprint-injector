@@ -44,14 +44,16 @@ function overrideGetterWithProxy(masterObject, propertyName, proxyHandler) {
 // eslint-disable-next-line no-unused-vars
 function overrideInstancePrototype(instance, overrideObj) {
     Object.keys(overrideObj).forEach((key) => {
-        try {
-            overrideGetterWithProxy(
-                Object.getPrototypeOf(instance),
-                key,
-                makeHandler().getterValue(overrideObj[key]),
-            );
-        } catch (e) {
-            console.error(`Could not override property: ${key} on ${instance}. Reason: ${e.message} `);
+        if (!(overrideObj[key] === null)) {
+            try {
+                overrideGetterWithProxy(
+                    Object.getPrototypeOf(instance),
+                    key,
+                    makeHandler().getterValue(overrideObj[key]),
+                );
+            } catch (e) {
+                console.error(`Could not override property: ${key} on ${instance}. Reason: ${e.message} `);
+            }
         }
     });
 }
@@ -252,7 +254,7 @@ const overrideCodecs = (audioCodecs, videoCodecs) => {
 
     const canPlayType = {
         // eslint-disable-next-line
-        apply: function(target, ctx, args) {
+        apply: function (target, ctx, args) {
             if (!args || !args.length) {
                 return target.apply(ctx, args);
             }
@@ -309,7 +311,9 @@ function makeHandler() {
 }
 function overrideScreenByReassigning(target, newProperties) {
     for (const [prop, value] of Object.entries(newProperties)) {
-        if (prop > 0) {
+        if (value > 0) {
+            // The 0 values are introduced by collecting in the hidden iframe.
+            // They are document sizes anyway so no need to test them or inject them.
             target[prop] = value;
         }
     }
