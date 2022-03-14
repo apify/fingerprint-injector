@@ -30,7 +30,7 @@ function overridePropertyWithProxy(masterObject, propertyName, proxyHandler) {
  */
 function overrideGetterWithProxy(masterObject, propertyName, proxyHandler) {
     const fn = Object.getOwnPropertyDescriptor(masterObject, propertyName).get;
-    const fnStr = fn.toString(); // special getter function string
+    const fnStr = fn.toString; // special getter function string
     const proxyObj = new Proxy(fn, stripProxyFromErrors(proxyHandler));
 
     redefineProperty(masterObject, propertyName, { get: proxyObj });
@@ -329,6 +329,46 @@ function overrideDocumentDimensionsProps(props) {
     overrideScreenByReassigning(window.document.body, props);
 }
 
-function overrideUserAgentData(userAgentData){
-    
+// eslint-disable-next-line no-unused-vars
+function overrideUserAgentData(userAgentData) {
+    const { brands, mobile, platform, ...highEntropyValues } = userAgentData;
+    // Override basic properties
+    const getHighEntropyValues = {
+        // eslint-disable-next-line
+        apply: async function (target, ctx, args) {
+            // Just to throw original validation error
+            // Remove traces of our Proxy
+            const stripErrorStack = (stack) => stack
+                .split('\n')
+                .filter((line) => !line.includes('at Object.apply'))
+                .filter((line) => !line.includes('at Object.get'))
+                .join('\n');
+
+            try {
+                if (!args || !args.length) {
+                    return target.apply(ctx, args);
+                }
+                const [hints] = args;
+                await target.apply(ctx, args);
+
+                // If the codec is not in our collected data use
+                const data = {};
+                hints.forEach((hint) => {
+                    data[hint] = highEntropyValues[hint];
+                });
+                return data;
+            } catch (err) {
+                err.stack = stripErrorStack(err.stack);
+                throw err;
+            }
+        },
+    };
+
+    overridePropertyWithProxy(
+        Object.getPrototypeOf(window.navigator.userAgentData),
+        'getHighEntropyValues',
+        getHighEntropyValues,
+    );
+
+    overrideInstancePrototype(window.navigator.userAgentData, { brands, mobile, platform });
 }

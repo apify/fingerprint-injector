@@ -132,10 +132,23 @@ describe('FingerprintInjector', () => {
                 }
 
                 if (name === 'Chrome') {
-                    const userAgentData = await page.evaluate(() => {
+                    const userAgentData = await page.evaluate(async () => {
                         // @ts-expect-error internal browser code
+                        const highEntropy = await navigator.userAgentData.getHighEntropyValues([
+                            'architecture',
+                            'bitness',
+                            'model',
+                            'platformVersion',
+                            'uaFullVersion',
+                            'fullVersionList',
+                            'platform',
+                        ]);
 
-                        return navigator.userAgentData;
+                        return {
+                            // @ts-expect-error internal browser code
+                            ...navigator.userAgentData,
+                            ...highEntropy,
+                        };
                     });
                     const { userAgentData: userAgentDataFp } = navigatorFp;
                     expect(userAgentData.brands).toBeDefined();

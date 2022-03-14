@@ -169,8 +169,7 @@ export class FingerprintInjector {
             overrideInstancePrototype(window.navigator, navigatorProps);
 
             if (userAgentData) {
-                // @ts-expect-error Internal browser code for injection
-                overrideInstancePrototype(window.navigator.userAgentData, userAgentData);
+                overrideUserAgentData(userAgentData);
             }
 
             // override screen
