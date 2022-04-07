@@ -145,9 +145,13 @@ describe('FingerprintInjector', () => {
                         ]);
 
                         return {
-                            // @ts-expect-error internal browser code
-                            ...navigator.userAgentData,
                             ...highEntropy,
+                            // @ts-expect-error internal browser code
+                            brands: navigator.userAgentData.brands,
+                            // @ts-expect-error internal browser code
+                            platform: navigator.userAgentData.platform,
+                            // @ts-expect-error internal browser code
+                            mobile: navigator.userAgentData.mobile,
                         };
                     });
                     const { userAgentData: userAgentDataFp } = navigatorFp;
