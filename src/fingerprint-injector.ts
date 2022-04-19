@@ -40,10 +40,6 @@ export class FingerprintInjector {
 
     utilsJs = this._loadUtils();
 
-    constructor() {
-        this.log.info('Successfully initialized.');
-    }
-
     /**
      * Adds init script to the browser context, so the fingerprint is changed before every document creation.
      * DISCLAIMER: Since the playwright does not support changing viewport and User-agent after the context is created,
