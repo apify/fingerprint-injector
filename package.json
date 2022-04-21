@@ -30,6 +30,7 @@
 		"@types/useragent": "^2.3.1",
 		"@typescript-eslint/eslint-plugin": "^4.32.0",
 		"@typescript-eslint/parser": "^4.32.0",
+		"concat-md": "^0.4.0",
 		"eslint": "^7.0.0",
 		"fingerprint-generator": "^2.0.0-beta.3",
 		"fs-extra": "^10.0.0",
@@ -42,6 +43,8 @@
 		"puppeteer": "^13.5.1",
 		"ts-jest": "^27.0.5",
 		"ts-node": "^10.2.1",
+		"typedoc": "^0.22.15",
+		"typedoc-plugin-markdown": "^3.12.0",
 		"typescript": "^4.4.3"
 	},
 	"scripts": {
@@ -51,7 +54,7 @@
 		"lint": "eslint src test",
 		"lint:fix": "eslint src test --fix",
 		"test": "npm run build && jest",
-		"build-docs": "npm run build && npm run build-toc && node docs/build-docs.js",
+		"generate-docs": "typedoc --theme markdown --readme none --mode file --out docs; cp  docs/README.md README.md ; concat-md docs > README.md",
 		"build-toc": "markdown-toc docs/README.md -i"
 	},
 	"author": {

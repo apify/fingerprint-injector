@@ -6,3 +6,4 @@ package-lock.json
 coverage
 apify_storage
 dist
+docs
