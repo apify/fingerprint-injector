@@ -107,6 +107,7 @@ describe('FingerprintInjector', () => {
 
                     response = await page.goto(`file://${__dirname}/test.html`);
                 }
+                return new Promise((resolve) => setTimeout(resolve, 2000));
             });
 
             afterEach(async () => {
@@ -255,7 +256,7 @@ describe('FingerprintInjector', () => {
                         const videoEl = document.createElement('video');
                         return videoEl.canPlayType(`video/${videoCodec}`);
                     }, codec);
-                    expect(canPlay).toEqual(canPlayBrowser);
+                    expect(canPlay).toBe(canPlayBrowser);
                 }
 
                 for (const [codec, canPlay] of Object.entries(audioCodecs)) {
@@ -264,7 +265,7 @@ describe('FingerprintInjector', () => {
                         const audioEl = document.createElement('audio');
                         return audioEl.canPlayType(`audio/${audioCodec}`);
                     }, codec);
-                    expect(canPlay).toEqual(canPlayBrowser);
+                    expect(canPlay).toBe(canPlayBrowser);
                 }
             });
 
