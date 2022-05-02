@@ -213,6 +213,7 @@ describe('FingerprintInjector', () => {
                 };
 
                 const screenProperties = Object.keys(screenObj);
+                console.log(screenProperties);
 
                 for (const screenProperty of screenProperties) {
                     const propValue = screen[screenProperty];
@@ -232,6 +233,7 @@ describe('FingerprintInjector', () => {
             });
 
             test('should override webGl', async () => {
+                console.log(fingerprint);
                 const { videoCard: { vendor, renderer } } = fingerprint;
                 const [browserVendor, browserRenderer] = await page.evaluate(() => {
                     // @ts-expect-error internal browser code
