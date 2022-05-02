@@ -78,8 +78,9 @@ describe('FingerprintInjector', () => {
             let fingerprintGenerator: FingerprintGenerator;
             let fingerprintWithHeaders: BrowserFingerprintWithHeaders;
             let fingerprint: Fingerprint;
+            let context: any;
 
-            beforeEach(async () => {
+            beforeAll(async () => {
                 fingerprintGenerator = new FingerprintGenerator({
                     devices: ['desktop'],
                     operatingSystems: ['linux'],
@@ -94,7 +95,7 @@ describe('FingerprintInjector', () => {
                 if (frameworkName === 'Playwright') {
                     browser = await launcher.launch({ headless: false, ...options }) as import('playwright').Browser;
 
-                    const context = await browser.newContext();
+                    context = await browser.newContext();
                     await fpInjector.attachFingerprintToPlaywright(context, fingerprintWithHeaders);
 
                     page = await context.newPage();
@@ -110,7 +111,7 @@ describe('FingerprintInjector', () => {
                 return new Promise((resolve) => setTimeout(resolve, 2000));
             });
 
-            afterEach(async () => {
+            afterAll(async () => {
                 if (browser) {
                     await browser.close();
                 }
