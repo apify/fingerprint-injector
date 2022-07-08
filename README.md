@@ -1,7 +1,7 @@
-# Fingerprint injector
+# (DEPRECATED) Fingerprint injector
 ---
 
-DEPRECATED: The `fingerprint-injector` package now lives in the [fingerprint-suite](https://github.com/apify/fingerprint-suite) repository. This repository is no longer actively maintained.
+**DEPRECATED** The `fingerprint-injector` package now lives in the [fingerprint-suite](https://github.com/apify/fingerprint-suite) repository. This repository is no longer actively maintained.
 
 ---
 The Fingerprint injector is a sparse javascript library built for stealth override of browser signatures or so-called fingerprints. Overriding browser fingerprints help simulate real user browsers.
